@@ -1,0 +1,20 @@
+{
+  "entrypoint": "src/rise-image.html",
+  "extraDependencies": [
+    "node_modules/@polymer/polymer/**",
+    "node_modules/@webcomponents/webcomponentsjs/**"
+  ],
+  "builds": [
+    {
+      "name": "prod",
+      "preset": "es5-bundled",
+      "addServiceWorker": false,
+      "html": { "minify": true },
+      "css": { "minify": true },
+      "js": { "minify": true },
+      "bundle": { "stripComments": true }
+    }
+  ],
+  "moduleResolution": "node",
+  "npm": true
+}
