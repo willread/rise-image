@@ -8,7 +8,8 @@ class RiseDataImage extends PolymerElement {
     return {
       file: {
         type: String,
-        value: ""
+        value: "",
+        observer: "_onFileChanged"
       },
       url: {
         type: String,
@@ -50,6 +51,7 @@ class RiseDataImage extends PolymerElement {
     super();
 
     this.file = this.getAttribute( "file" );
+    this._startReceived = false;
     this._watchInitiated = false;
   }
 
@@ -98,17 +100,24 @@ class RiseDataImage extends PolymerElement {
       return this._handleStartForPreview();
     }
 
-    this._logInfo( RiseDataImage.EVENT_START );
+    if ( !this._startReceived ) {
+      this._startReceived = true;
+      this._logInfo( RiseDataImage.EVENT_START );
+    }
+
+    if ( !this.file ) {
+      return;
+    }
 
     RisePlayerConfiguration.Licensing.onStorageLicenseStatusChange( status => {
       if ( status.authorized ) {
         this._logInfo( RiseDataImage.EVENT_LICENSED );
 
         if ( !this._watchInitiated ) {
+          this._watchInitiated = true;
           RisePlayerConfiguration.LocalStorage.watchSingleFile(
             this.file, message => this._handleSingleFileUpdate( message )
           );
-          this._watchInitiated = true;
         }
       } else {
         this._logWarning( RiseDataImage.EVENT_UNLICENSED );
@@ -127,6 +136,13 @@ class RiseDataImage extends PolymerElement {
 
   _logWarning( event, details = null ) {
     RisePlayerConfiguration.Logger.warning( this._getComponentData(), event, details, { storage: this._getStorageData() });
+  }
+
+  _onFileChanged( newValue ) {
+    if ( newValue && this._startReceived ) {
+      this._watchInitiated = false;
+      this._handleStart();
+    }
   }
 
   _handleSingleFileError( message ) {
