@@ -30,30 +30,118 @@
       }
     </script>
     <style>
-      #rise-image-01 {
-        --rise-image-width: 300px;
-        --rise-image-height: 300px;
+      #rise-image-non-editable {
+        --rise-image-width: 361px;
+        --rise-image-height: 335px;
+        --rise-image-background-color: bisque;
+      }
+
+      #rise-image-sizing-contain,
+      #rise-image-sizing-cover,
+      #rise-image-position
+      {
+        --rise-image-width: 275px;
+        --rise-image-height: 275px;
         --rise-image-background-color: bisque;
       }
     </style>
   </head>
   <body>
-    <rise-image id="rise-image-01"
-                sizing="cover"
-                position="bottom right"
-                file="risemedialibrary-30007b45-3df0-4c7b-9f7f-7d8ce6443013/logo.png">
-    </rise-image>
+
+    <div>
+      <h3>Static Image - 361 x 335</h3>
+      <p>Actual size of image within same dimension boundaries via custom properties</p>
+      <rise-image id="rise-image-non-editable"
+                  file="risemedialibrary-30007b45-3df0-4c7b-9f7f-7d8ce6443013/logo.png">
+      </rise-image>
+    </div>
+
+    <hr>
+
+    <div>
+      <h3>Sizing Feature [Contain] - 275 x 275</h3>
+      <rise-image id="rise-image-sizing-contain"
+                  file="risemedialibrary-30007b45-3df0-4c7b-9f7f-7d8ce6443013/logo.png"
+                  sizing="contain">
+      </rise-image>
+    </div>
+
+    <hr>
+
+    <div>
+      <h3>Sizing Feature [Cover] - 275 x 275</h3>
+      <rise-image id="rise-image-sizing-cover"
+                  file="risemedialibrary-30007b45-3df0-4c7b-9f7f-7d8ce6443013/logo.png"
+                  sizing="cover">
+      </rise-image>
+    </div>
+
+    <hr>
+
+    <div>
+      <h3>Sizing && Position Feature [Contain] - 275 x 275</h3>
+      <rise-image id="rise-image-position"
+                  file="risemedialibrary-30007b45-3df0-4c7b-9f7f-7d8ce6443013/logo.png"
+                  sizing="contain"
+                  position="center">
+      </rise-image>
+    </div>
+
+    <hr>
+
+    <div>
+      <h3>Sizing && Position Feature [Cover] - 275 x 275</h3>
+      <rise-image id="rise-image-position"
+                  file="risemedialibrary-30007b45-3df0-4c7b-9f7f-7d8ce6443013/logo.png"
+                  sizing="cover"
+                  position="right">
+      </rise-image>
+    </div>
+
+    <hr>
+
+    <div>
+      <h3>Editable Image</h3>
+      <button onclick="publish()">Publish Update</button>
+      <br>
+      <rise-image id="rise-image-02"></rise-image>
+    </div>
+
+    <hr>
 
     <script>
-      function configureComponents() {
-        console.log( "manual component configuration" );
+      function applyAttributes( element, attributes ) {
+        element.style.setProperty("--rise-image-width", `${attributes.width}px`);
+        element.style.setProperty("--rise-image-height", `${attributes.height}px`);
+        element.setAttribute( "sizing", attributes.sizing );
+        element.setAttribute( "position", attributes.position );
+        element.setAttribute( "file", attributes.file );
+      }
 
-        // TODO: all of the following will be implemented later by a rise-image component
-        const image01 = document.querySelector('#rise-image-01');
-        setTimeout( () => {
-          image01.style.setProperty("--rise-image-width", "700px");
-          image01.setAttribute( "position", "top left" );
-        }, 3000 )
+      function publish() {
+        const image02 = document.querySelector("#rise-image-02"),
+          attributes = {
+            width: 300,
+            height: 400,
+            sizing: "contain",
+            position: "top right",
+            file: "risemedialibrary-30007b45-3df0-4c7b-9f7f-7d8ce6443013/stu/images/Costa Rican Frog.jpg"
+          };
+
+        applyAttributes( image02, attributes );
+      }
+
+      function configureComponents() {
+        const image02 = document.querySelector("#rise-image-02"),
+          attributes = {
+            width: 500,
+            height: 400,
+            sizing: "cover",
+            position: "top right",
+            file: "risemedialibrary-30007b45-3df0-4c7b-9f7f-7d8ce6443013/stu/images/Boston City Flow.jpg"
+          };
+
+        applyAttributes( image02, attributes );
       }
 
       window.addEventListener( "rise-components-ready", configureComponents );
@@ -62,7 +150,7 @@
       // Note: the connection can also be checked via RisePlayerConfiguration.LocalMessaging.isConnected()
       window.addEventListener( "rise-local-messaging-connection", event => {
         if ( !event.detail.isConnected ) {
-          document.querySelector('#image01').innerHTML = `
+          document.querySelector("#message").innerHTML = `
             <p>no connection to local messaging</p>
           `;
         }
