@@ -2,7 +2,8 @@ version: 2.1
 
 jobs:
   install:
-    docker: *BUILDIMAGE
+    docker: &BUILDIMAGE
+      - image: jenkinsrise/cci-v2-components:0.0.4
     steps:
       - checkout
       - restore_cache:
