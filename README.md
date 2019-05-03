@@ -40,6 +40,22 @@ This attribute holds a literal value, for example:
 
 If it's not set, the label for the component defaults to "Image", which is applied via the   [generate_blueprint.js](https://github.com/Rise-Vision/html-template-library/blob/master/generate_blueprint.js) file for a HTML Template build/deployment.
 
+### Styles
+
+Styles for width, height and background color can be set for an image using CSS, example:
+
+```
+  <style>
+    #rise-image-non-editable {
+      --rise-image-width: 361px;
+      --rise-image-height: 335px;
+      --rise-image-background-color: bisque;
+    }
+  </style>
+```
+
+The demo page illustrates this.
+
 ### Attributes
 
 This component receives the following list of attributes:
