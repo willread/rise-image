@@ -56,6 +56,10 @@ class RiseImage extends PolymerElement {
     return "start";
   }
 
+  static get EVENT_IMAGE_STATUS_UPDATED() {
+    return "image-status-updated";
+  }
+
   static get EVENT_IMAGE_ERROR() {
     return "image-error";
   }
@@ -177,10 +181,14 @@ class RiseImage extends PolymerElement {
   }
 
   _handleSingleFileError( message ) {
+    const details = { file: this.file, errorMessage: message.errorMessage, errorDetail: message.errorDetail };
+
     this._logError( RiseImage.EVENT_IMAGE_ERROR, {
       errorMessage: message.errorMessage,
       errorDetail: message.errorDetail
     });
+
+    this._sendImageEvent( RiseImage.EVENT_IMAGE_ERROR, details );
   }
 
   _handleSingleFileUpdate( message ) {
@@ -204,6 +212,10 @@ class RiseImage extends PolymerElement {
     if ( status === "CURRENT" ) {
       this.$.image.src = this.url
     }
+
+    this._sendImageEvent( RiseImage.EVENT_IMAGE_STATUS_UPDATED, {
+      file: this.file, url: this.url, status: status
+    });
   }
 
   _sendImageEvent( eventName, detail = {}) {
