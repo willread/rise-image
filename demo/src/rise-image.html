@@ -1,0 +1,163 @@
+<!doctype html>
+
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <script src="https://widgets.risevision.com/scripts/primus-local-messaging.js"></script>
+
+    <script src="../node_modules/@webcomponents/webcomponentsjs/webcomponents-loader.js"></script>
+    <script src="../node_modules/@webcomponents/webcomponentsjs/custom-elements-es5-adapter.js"></script>
+    <script type="module">
+      // this and the following block are needed at build time to force the creation of the shared bundle script
+      import { PolymerElement, html } from '@polymer/polymer/polymer-element.js';
+    </script>
+    <script type="module">
+      import { PolymerElement, html } from '@polymer/polymer/polymer-element.js';
+    </script>
+    <script src="https://widgets.risevision.com/beta/common/config-test.min.js"></script>
+    <script src="https://widgets.risevision.com/beta/common/common-template.min.js"></script>
+    <script src="https://widgets.risevision.com/beta/components/rise-image/rise-image.js"></script>
+    <script>
+      if (document.domain.indexOf("localhost") === -1) {
+        try {
+          document.domain = "risevision.com";
+        } catch (err) {
+          // can't set document.domain, risevision.com not an accepted suffix of current document domain
+          console.log("document.domain can't be set", err);
+        }
+      }
+    </script>
+    <style>
+      #rise-image-non-editable {
+        --rise-image-width: 361px;
+        --rise-image-height: 335px;
+        --rise-image-background-color: bisque;
+      }
+
+      #rise-image-sizing-contain,
+      #rise-image-sizing-cover,
+      #rise-image-position
+      {
+        --rise-image-width: 275px;
+        --rise-image-height: 275px;
+        --rise-image-background-color: bisque;
+      }
+    </style>
+  </head>
+  <body>
+
+    <div>
+      <h3>Static Image - 361 x 335</h3>
+      <p>Actual size of image within same dimension boundaries via custom properties</p>
+      <rise-image id="rise-image-non-editable"
+                  file="risemedialibrary-30007b45-3df0-4c7b-9f7f-7d8ce6443013/logo.png">
+      </rise-image>
+    </div>
+
+    <hr>
+
+    <div>
+      <h3>Sizing Feature [Contain] - 275 x 275</h3>
+      <rise-image id="rise-image-sizing-contain"
+                  file="risemedialibrary-30007b45-3df0-4c7b-9f7f-7d8ce6443013/logo.png"
+                  sizing="contain">
+      </rise-image>
+    </div>
+
+    <hr>
+
+    <div>
+      <h3>Sizing Feature [Cover] - 275 x 275</h3>
+      <rise-image id="rise-image-sizing-cover"
+                  file="risemedialibrary-30007b45-3df0-4c7b-9f7f-7d8ce6443013/logo.png"
+                  sizing="cover">
+      </rise-image>
+    </div>
+
+    <hr>
+
+    <div>
+      <h3>Sizing && Position Feature [Contain] - 275 x 275</h3>
+      <rise-image id="rise-image-position"
+                  file="risemedialibrary-30007b45-3df0-4c7b-9f7f-7d8ce6443013/logo.png"
+                  sizing="contain"
+                  position="center">
+      </rise-image>
+    </div>
+
+    <hr>
+
+    <div>
+      <h3>Sizing && Position Feature [Cover] - 275 x 275</h3>
+      <rise-image id="rise-image-position"
+                  file="risemedialibrary-30007b45-3df0-4c7b-9f7f-7d8ce6443013/logo.png"
+                  sizing="cover"
+                  position="right">
+      </rise-image>
+    </div>
+
+    <hr>
+
+    <div>
+      <h3>Editable Image</h3>
+      <button onclick="publish()">Publish Update</button>
+      <br>
+      <rise-image id="rise-image-02"></rise-image>
+    </div>
+
+    <hr>
+
+    <script>
+      function applyAttributes( element, attributes ) {
+        element.style.setProperty("--rise-image-width", `${attributes.width}px`);
+        element.style.setProperty("--rise-image-height", `${attributes.height}px`);
+        element.setAttribute( "sizing", attributes.sizing );
+        element.setAttribute( "position", attributes.position );
+        element.setAttribute( "file", attributes.file );
+      }
+
+      function publish() {
+        const image02 = document.querySelector("#rise-image-02"),
+          attributes = {
+            width: 300,
+            height: 400,
+            sizing: "contain",
+            position: "top right",
+            file: "risemedialibrary-30007b45-3df0-4c7b-9f7f-7d8ce6443013/stu/images/Costa Rican Frog.jpg"
+          };
+
+        applyAttributes( image02, attributes );
+      }
+
+      function configureComponents() {
+        const image02 = document.querySelector("#rise-image-02"),
+          attributes = {
+            width: 500,
+            height: 400,
+            sizing: "cover",
+            position: "top right",
+            file: "risemedialibrary-30007b45-3df0-4c7b-9f7f-7d8ce6443013/stu/images/Boston City Flow.jpg"
+          };
+
+        applyAttributes( image02, attributes );
+      }
+
+      window.addEventListener( "rise-components-ready", configureComponents );
+
+      // Demonstrating how to handle no connection to local messaging via listening for event
+      // Note: the connection can also be checked via RisePlayerConfiguration.LocalMessaging.isConnected()
+      window.addEventListener( "rise-local-messaging-connection", event => {
+        if ( !event.detail.isConnected ) {
+          document.querySelector("#message").innerHTML = `
+            <p>no connection to local messaging</p>
+          `;
+        }
+      } );
+    </script>
+    <script>
+      RisePlayerConfiguration.configure();
+    </script>
+  </body>
+</html>
