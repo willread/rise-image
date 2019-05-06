@@ -7,14 +7,7 @@ import "@polymer/iron-image/iron-image.js";
 class RiseImage extends PolymerElement {
   static get template() {
     return html`
-      <style>
-        #image {
-          height: var(--rise-image-height);
-          width: var(--rise-image-width);
-          background-color: var(--rise-image-background-color);
-        }
-      </style>
-      <iron-image id="image" sizing="[[sizing]]" position="[[position]]" placeholder="[[placeholder]]"></iron-image>
+      <iron-image id="image"></iron-image>
     `;
   }
 
@@ -25,27 +18,6 @@ class RiseImage extends PolymerElement {
         value: ""
       },
       url: {
-        type: String,
-        value: ""
-      },
-      /**
-       * Sizing of the image
-       */
-      sizing: {
-        type: String,
-        value: ""
-      },
-      /**
-       * Position of the image
-       */
-      position: {
-        type: String,
-        value: ""
-      },
-      /**
-       * Background/placeholder until the src (file) of the image has loaded.
-       */
-      placeholder: {
         type: String,
         value: ""
       }

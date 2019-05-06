@@ -40,22 +40,6 @@ This attribute holds a literal value, for example:
 
 If it's not set, the label for the component defaults to "Image", which is applied via the   [generate_blueprint.js](https://github.com/Rise-Vision/html-template-library/blob/master/generate_blueprint.js) file for a HTML Template build/deployment.
 
-### Styles
-
-Styles for width, height and background color can be set for an image using CSS, example:
-
-```
-  <style>
-    #rise-image-non-editable {
-      --rise-image-width: 361px;
-      --rise-image-height: 335px;
-      --rise-image-background-color: bisque;
-    }
-  </style>
-```
-
-The demo page illustrates this.
-
 ### Attributes
 
 This component receives the following list of attributes:
@@ -63,8 +47,6 @@ This component receives the following list of attributes:
 - **id**: ( string / required ): Unique HTML id with format 'rise-image-<NAME_OR_NUMBER>'.
 - **file** ( string / required ): Valid Rise GCS path. Example: "risemedialibrary-xxxxxx-xxxx-xxxx-xxxx-xxxxxxxx/logo.png".
 - **label**: ( string ): An optional label key for the text that will appear in the template editor. See 'Labels' section above.
-- **sizing**: ( string / optional ): Can be "contain" or "cover". It's a property of an internal iron-image component. [Documentation](https://www.webcomponents.org/element/@polymer/iron-image/elements/iron-image#property-sizing).
-- **position**: ( string / optional ):  It's a property of an internal iron-image component. [Documentation](https://www.webcomponents.org/element/@polymer/iron-image/elements/iron-image#property-position).
 
 ### Events
 
