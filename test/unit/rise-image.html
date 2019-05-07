@@ -1,0 +1,276 @@
+<!doctype html>
+
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <script src="../../node_modules/@webcomponents/webcomponentsjs/webcomponents-loader.js"></script>
+    <script src="../../node_modules/wct-browser-legacy/browser.js"></script>
+    <script>
+      const SAMPLE_PATH = 'risemedialibrary-30007b45-3df0-4c7b-9f7f-7d8ce6443013/logo.png';
+      const SAMPLE_URL = `https://storage.googleapis.com/${ SAMPLE_PATH }`;
+
+      RisePlayerConfiguration = {
+        isPreview: () => false
+      };
+    </script>
+    <script src="../../src/rise-image.js" type="module"></script>
+  </head>
+  <body>
+    <test-fixture id="test-block">
+      <template>
+        <rise-image sizing="contain"
+          file="risemedialibrary-30007b45-3df0-4c7b-9f7f-7d8ce6443013/logo.png">
+        </rise-image>
+      </template>
+    </test-fixture>
+
+    <script>
+      let licenseMock = { authorized: true };
+
+      suite('rise-image', () => {
+        let element;
+
+        setup(() => {
+          RisePlayerConfiguration.LocalStorage = {
+            watchSingleFile: (file, handler) => {
+              setTimeout(
+                () => handler({ status: "CURRENT", fileUrl: SAMPLE_URL }), 1000
+              );
+            }
+          };
+
+          RisePlayerConfiguration.Logger = {
+            info: () => {},
+            error: () => {},
+            warning: () => {}
+          };
+
+          RisePlayerConfiguration.Licensing = {
+            onStorageLicenseStatusChange: handler => handler( licenseMock )
+          };
+
+          element = fixture('test-block');
+        });
+
+        teardown(() => {
+          RisePlayerConfiguration.LocalStorage = {};
+          RisePlayerConfiguration.Logger = {};
+          RisePlayerConfiguration.Licensing = {};
+        });
+
+        test('it should have a property file', () => {
+          assert.equal(element.file, SAMPLE_PATH);
+        });
+
+        test('it should send an image updated event if an image is available', done => {
+          element.addEventListener('image-status-updated', event => {
+            assert.deepEqual(event.detail, {
+              status: "CURRENT", url: SAMPLE_URL, file: SAMPLE_PATH
+            });
+
+            assert.equal(element.url, SAMPLE_URL);
+            assert.equal(element.$.image.src, SAMPLE_URL);
+
+            done();
+          });
+
+          element.addEventListener('configured', () =>
+            element.dispatchEvent( new CustomEvent( "start" ) )
+          );
+          element.dispatchEvent( new CustomEvent( "start" ) );
+        });
+
+        test("it should send an 'unlicensed' event if display is unlicensed", done => {
+          element.addEventListener('unlicensed', event => {
+            assert.deepEqual(event.detail, {});
+            licenseMock = { authorized: true };
+
+            done();
+          });
+
+          licenseMock = {authorized: false};
+
+          element.addEventListener('configured', () =>
+            element.dispatchEvent( new CustomEvent( "start" ) )
+          );
+          element.dispatchEvent( new CustomEvent( "start" ) );
+        });
+      });
+
+      suite('rise-data-image image not available', () => {
+        let element;
+
+        setup(() => {
+          RisePlayerConfiguration.LocalStorage = {
+            watchSingleFile: (file, handler) => {
+              setTimeout(
+                () => handler({ status: "NOEXIST" }), 1000
+              );
+            }
+          };
+
+          RisePlayerConfiguration.Logger = {
+            info: () => {},
+            error: () => {},
+            warning: () => {}
+          };
+
+          RisePlayerConfiguration.Licensing = {
+            onStorageLicenseStatusChange: handler => handler( licenseMock )
+          };
+
+          element = fixture('test-block');
+        });
+
+        teardown(() => {
+          RisePlayerConfiguration.LocalStorage = {};
+          RisePlayerConfiguration.Logger = {};
+          RisePlayerConfiguration.Licensing = {};
+        });
+
+        test('it should send an image updated event with NOEXIST status if an image does not exist', done => {
+          element.addEventListener('image-status-updated', event => {
+            assert.deepEqual(event.detail, {
+              status: "NOEXIST", file: SAMPLE_PATH, url: ""
+            });
+
+            assert(!element.url);
+
+            done();
+          });
+
+          element.addEventListener('configured', () =>
+            element.dispatchEvent( new CustomEvent( "start" ) )
+          );
+          element.dispatchEvent( new CustomEvent( "start" ) );
+        });
+      });
+
+      suite('rise-data-image image error', () => {
+        let element;
+
+        setup(() => {
+          RisePlayerConfiguration.LocalStorage = {
+            watchSingleFile: (file, handler) => {
+              setTimeout(
+                () => handler({
+                  fileUrl: null,
+                  status: "FILE-ERROR",
+                  errorMessage: "image download error",
+                  errorDetail: "network failure"
+                }), 1000
+              );
+            }
+          };
+
+          RisePlayerConfiguration.Logger = {
+            info: () => {},
+            error: () => {},
+            warning: () => {}
+          };
+
+          RisePlayerConfiguration.Licensing = {
+            onStorageLicenseStatusChange: handler => handler( licenseMock )
+          };
+
+          element = fixture('test-block');
+        });
+
+        teardown(() => {
+          RisePlayerConfiguration.LocalStorage = {};
+          RisePlayerConfiguration.Logger = {};
+          RisePlayerConfiguration.Licensing = {};
+        });
+
+        test('it should send an image error event if an image local storage error was received', done => {
+          element.addEventListener('image-error', event => {
+            assert(!element.url);
+
+            assert.deepEqual( event.detail, {
+              file: SAMPLE_PATH,
+              errorMessage: "image download error",
+              errorDetail: "network failure"
+            });
+
+            done();
+          });
+
+          element.addEventListener('configured', () =>
+            element.dispatchEvent( new CustomEvent( "start" ) )
+          );
+          element.dispatchEvent( new CustomEvent( "start" ) );
+        });
+      });
+
+      suite( "_getStorageFileFormat", () => {
+        let element;
+
+        setup(() => {
+          RisePlayerConfiguration.LocalStorage = {
+            watchSingleFile: () => {}
+          };
+
+          RisePlayerConfiguration.Logger = {
+            info: () => {},
+            error: () => {}
+          };
+
+          element = fixture('test-block');
+        });
+
+        teardown(() => {
+          RisePlayerConfiguration.LocalStorage = {};
+          RisePlayerConfiguration.Logger = {};
+        });
+
+        test( "should return correct format from file path", () => {
+          assert.equal( element._getStorageFileFormat( SAMPLE_PATH ), "png" );
+          assert.equal( element._getStorageFileFormat( "risemedialibrary-abc123/logo.jpg" ), "jpg" );
+          assert.equal( element._getStorageFileFormat( "risemedialibrary-abc123/logo.jpg.svg" ), "svg" );
+          assert.equal( element._getStorageFileFormat( "" ), "" );
+        } );
+      } );
+
+      suite('rise-data-image on preview', () => {
+        let element;
+
+        setup(() => {
+          RisePlayerConfiguration.isPreview = () => true;
+
+          RisePlayerConfiguration.Logger = {
+            info: () => {},
+            error: () => {}
+          };
+
+          element = fixture('test-block');
+        });
+
+        teardown(() => {
+          RisePlayerConfiguration.isPreview = () => false;
+
+          RisePlayerConfiguration.Logger = {};
+        });
+
+        test('it should send an image updated event', done => {
+          element.addEventListener('image-status-updated', event => {
+            assert.deepEqual(event.detail, {
+              status: "CURRENT", url: SAMPLE_URL, file: SAMPLE_PATH
+            });
+
+            assert.equal(element.url, SAMPLE_URL);
+
+            done();
+          });
+
+          element.addEventListener('configured', () =>
+            element.dispatchEvent( new CustomEvent( "start" ) )
+          );
+          element.dispatchEvent( new CustomEvent( "start" ) );
+        });
+      });
+
+    </script>
+  </body>
+</html>
