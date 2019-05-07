@@ -48,14 +48,6 @@ class RiseImage extends PolymerElement {
     return "https://storage.googleapis.com/";
   }
 
-  // Each item of observers array is a method name followed by
-  // a comma-separated list of one or more dependencies.
-  static get observers() {
-    return [
-      "_handlePlaceholder(placeholder)"
-    ]
-  }
-
   constructor() {
     super();
 
@@ -89,11 +81,6 @@ class RiseImage extends PolymerElement {
       id: this.id,
       version: version
     };
-  }
-
-  _handlePlaceholder( value ) {
-    console.log( "handle placeholder", value, this.$.image.preload );
-    this.$.image.preload = typeof value !== "undefined" && value;
   }
 
   _getStorageData() {
