@@ -16,12 +16,20 @@ class RiseImage extends PolymerElement {
       file: {
         type: String,
         value: ""
-      },
-      url: {
-        type: String,
-        value: ""
       }
     };
+  }
+
+  // Each item of observers array is a method name followed by
+  // a comma-separated list of one or more dependencies.
+  static get observers() {
+    return [
+      "_reset(file)"
+    ]
+  }
+
+  static get EVENT_CONFIGURED() {
+    return "configured";
   }
 
   static get EVENT_START() {
@@ -44,6 +52,18 @@ class RiseImage extends PolymerElement {
     return "unlicensed";
   }
 
+  static get LOG_TYPE_INFO() {
+    return "info";
+  }
+
+  static get LOG_TYPE_WARNING() {
+    return "warning";
+  }
+
+  static get LOG_TYPE_ERROR() {
+    return "error";
+  }
+
   static get STORAGE_PREFIX() {
     return "https://storage.googleapis.com/";
   }
@@ -51,8 +71,10 @@ class RiseImage extends PolymerElement {
   constructor() {
     super();
 
-    this.file = this.getAttribute( "file" );
     this._watchInitiated = false;
+    this._initialStart = true;
+    this._invalidFileType = false;
+    this._url = "";
   }
 
   ready() {
@@ -70,8 +92,8 @@ class RiseImage extends PolymerElement {
   }
 
   _configureImageEventListeners() {
-    this.$.image.addEventListener( "error-changed", () => {
-
+    this.$.image.addEventListener( "error-changed", ( evt ) => {
+      console.log( evt );
     });
   }
 
@@ -88,7 +110,7 @@ class RiseImage extends PolymerElement {
       configuration: "storage file",
       file_form: this._getStorageFileFormat( this.file ),
       file_path: this.file,
-      local_url: this.url
+      local_url: this._url
     }
   }
 
@@ -96,56 +118,113 @@ class RiseImage extends PolymerElement {
     return filePath.substr( filePath.lastIndexOf( "." ) + 1 ).toLowerCase();
   }
 
-  _handleStartForPreview() {
-    // check license for preview will be implemented in some other epic later
+  _reset() {
+    if ( !this._initialStart ) {
 
-    this.url = RiseImage.STORAGE_PREFIX + this.file;
-    this._handleImageStatusUpdated( "CURRENT" );
+      this._watchInitiated = false;
+      this._url = "";
+
+      this._log( RiseImage.LOG_TYPE_INFO, "reset", null, { storage: this._getStorageData() });
+      this._start();
+    }
   }
 
-  _handleStart() {
+  _isValidFileType( path ) {
+    const format = this._getStorageFileFormat( path ),
+      valid = [ "jpg", "jpeg", "png", "bmp", "svg", "gif", "webp" ];
+
+
+    for ( let i = 0, len = valid.length; i < len; i++ ) {
+      if ( format.indexOf( valid[ i ]) !== -1 ) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  _filterInvalidFileTypes() {
+    if ( this.file ) {
+      if ( !this._isValidFileType( this.file )) {
+        const errorMessage = "Invalid file format";
+
+        this._log( RiseImage.LOG_TYPE_ERROR, RiseImage.EVENT_IMAGE_ERROR, { errorMessage }, { storage: this._getStorageData() });
+        this._sendImageEvent( RiseImage.EVENT_IMAGE_ERROR, { file: this.file, errorMessage });
+        this._invalidFileType = true;
+      }
+    }
+  }
+
+  _renderImage( url ) {
+    this.$.image.src = url
+  }
+
+  _clearImage() {
+    this.$.image.src = "";
+  }
+
+  _start() {
+    this._filterInvalidFileTypes();
+
+    if ( !this.file || this._invalidFileType ) {
+      this._clearImage();
+      return;
+    }
+
     if ( RisePlayerConfiguration.isPreview()) {
       return this._handleStartForPreview();
     }
 
-    this._logInfo( RiseImage.EVENT_START );
+    if ( !this._watchInitiated ) {
+      RisePlayerConfiguration.LocalStorage.watchSingleFile(
+        this.file, message => this._handleSingleFileUpdate( message )
+      );
+      this._watchInitiated = true;
+    }
+  }
 
-    RisePlayerConfiguration.Licensing.onStorageLicenseStatusChange( status => {
-      if ( status.authorized ) {
-        this._logInfo( RiseImage.EVENT_LICENSED );
+  _handleStartForPreview() {
+    // check license for preview will be implemented in some other epic later
 
-        if ( !this._watchInitiated ) {
-          RisePlayerConfiguration.LocalStorage.watchSingleFile(
-            this.file, message => this._handleSingleFileUpdate( message )
-          );
-          this._watchInitiated = true;
-        }
-      } else {
-        this._logWarning( RiseImage.EVENT_UNLICENSED );
-        this._sendImageEvent( RiseImage.EVENT_UNLICENSED );
+    this._url = RiseImage.STORAGE_PREFIX + this.file;
+    this._handleImageStatusUpdated( "CURRENT" );
+  }
+
+  _handleStart() {
+    if ( this._initialStart ) {
+      this._initialStart = false;
+
+      if ( !RisePlayerConfiguration.isPreview()) {
+        this._log( RiseImage.LOG_TYPE_INFO, RiseImage.EVENT_START, null, { storage: this._getStorageData() });
       }
-    });
+
+      this._start();
+    }
   }
 
-  _logInfo( event, details = null ) {
-    RisePlayerConfiguration.Logger.info( this._getComponentData(), event, details, { storage: this._getStorageData() });
-  }
+  _log( type, event, details = null, additionalFields ) {
+    const componentData = this._getComponentData();
 
-  _logError( event, details = null ) {
-    RisePlayerConfiguration.Logger.error( this._getComponentData(), event, details, { storage: this._getStorageData() });
-  }
-
-  _logWarning( event, details = null ) {
-    RisePlayerConfiguration.Logger.warning( this._getComponentData(), event, details, { storage: this._getStorageData() });
+    switch ( type ) {
+    case RiseImage.LOG_TYPE_INFO:
+      RisePlayerConfiguration.Logger.info( componentData, event, details, additionalFields );
+      break;
+    case RiseImage.LOG_TYPE_WARNING:
+      RisePlayerConfiguration.Logger.warning( componentData, event, details, additionalFields );
+      break;
+    case RiseImage.LOG_TYPE_ERROR:
+      RisePlayerConfiguration.Logger.error( componentData, event, details, additionalFields );
+      break;
+    }
   }
 
   _handleSingleFileError( message ) {
     const details = { file: this.file, errorMessage: message.errorMessage, errorDetail: message.errorDetail };
 
-    this._logError( RiseImage.EVENT_IMAGE_ERROR, {
+    this._log( RiseImage.LOG_TYPE_ERROR, RiseImage.EVENT_IMAGE_ERROR, {
       errorMessage: message.errorMessage,
       errorDetail: message.errorDetail
-    });
+    }, { storage: this._getStorageData() });
 
     this._sendImageEvent( RiseImage.EVENT_IMAGE_ERROR, details );
   }
@@ -155,7 +234,7 @@ class RiseImage extends PolymerElement {
       return;
     }
 
-    this.url = message.fileUrl || "";
+    this._url = message.fileUrl || "";
 
     if ( message.status === "FILE-ERROR" ) {
       this._handleSingleFileError( message );
@@ -166,15 +245,11 @@ class RiseImage extends PolymerElement {
   }
 
   _handleImageStatusUpdated( status ) {
-    this._logInfo( RiseImage.EVENT_IMAGE_STATUS_UPDATED, { status: status });
+    this._log( RiseImage.LOG_TYPE_INFO, RiseImage.EVENT_IMAGE_STATUS_UPDATED, { status: status }, { storage: this._getStorageData() });
 
     if ( status === "CURRENT" ) {
-      this.$.image.src = this.url
+      this._renderImage( this._url );
     }
-
-    this._sendImageEvent( RiseImage.EVENT_IMAGE_STATUS_UPDATED, {
-      file: this.file, url: this.url, status: status
-    });
   }
 
   _sendImageEvent( eventName, detail = {}) {
