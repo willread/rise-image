@@ -71,9 +71,39 @@
           }, 1000 );
         });
 
+        test('it should clear image when file attribute is empty', () => {
+          let spy = sinon.spy( element, "_clearImage" );
+
+          element.file = "";
+
+          element.addEventListener('configured', () =>
+            element.dispatchEvent( new CustomEvent( "start" ) )
+          );
+          element.dispatchEvent( new CustomEvent( "start" ) );
+
+          assert(spy.called);
+
+          spy.restore();
+        });
+
+        test('it should clear image when file type is invalid', () => {
+          let spy = sinon.spy( element, "_clearImage" );
+
+          element.file = "risemedialibrary-30007b45-3df0-4c7b-9f7f-7d8ce6443013/test.txt";
+
+          element.addEventListener('configured', () =>
+            element.dispatchEvent( new CustomEvent( "start" ) )
+          );
+          element.dispatchEvent( new CustomEvent( "start" ) );
+
+          assert(spy.called);
+
+          spy.restore();
+        });
+
       });
 
-      suite('rise-data-image image error', () => {
+      suite('error', () => {
         let element;
 
         setup(() => {
@@ -122,6 +152,26 @@
           );
           element.dispatchEvent( new CustomEvent( "start" ) );
         });
+
+        test('it should send an image error event when file type is invalid', done => {
+          element.addEventListener('image-error', event => {
+            assert(!element.url);
+
+            assert.deepEqual( event.detail, {
+              file: "risemedialibrary-30007b45-3df0-4c7b-9f7f-7d8ce6443013/test.txt",
+              errorMessage: "Invalid file format"
+            });
+
+            done();
+          });
+
+          element.file = "risemedialibrary-30007b45-3df0-4c7b-9f7f-7d8ce6443013/test.txt";
+
+          element.addEventListener('configured', () =>
+            element.dispatchEvent( new CustomEvent( "start" ) )
+          );
+          element.dispatchEvent( new CustomEvent( "start" ) );
+        });
       });
 
       suite( "_getStorageFileFormat", () => {
@@ -153,7 +203,7 @@
         } );
       } );
 
-      suite('rise-data-image on preview', () => {
+      suite('rise-image on preview', () => {
         let element;
 
         setup(() => {
@@ -187,6 +237,37 @@
           }, 1000 );
         });
       });
+
+      suite( "_reset", () => {
+        let element,
+          startStub;
+
+        setup( () => {
+          RisePlayerConfiguration.Logger = {
+            info: () => {}
+          };
+
+          element = fixture('test-block');
+
+          startStub = sinon.stub( element, "_start" );
+        } );
+
+        teardown( () => {
+          RisePlayerConfiguration.Logger = {};
+          startStub.restore();
+        } );
+
+        test( "should call _start() if not initial start", () => {
+          // need to remove the stub and add back on every test
+          element._initialStart = false;
+          element._watchInitiated = true;
+          element._reset();
+
+          assert.isFalse( element._watchInitiated );
+          assert.isTrue( startStub.calledOnce );
+        } );
+
+      } );
 
     </script>
   </body>
