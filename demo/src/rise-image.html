@@ -31,14 +31,37 @@
     </script>
   </head>
   <body>
-    <script>
-      function configureComponents() {
-      }
+  <rise-image
+    id="rise-image-01"
+    label="My Image"
+    file="risemedialibrary-7fa5ee92-7deb-450b-a8d5-e5ed648c575f/stu-testing/images/rise-image-demo/Costa Rican Frog.jpg">
+  </rise-image>
 
-      window.addEventListener( "rise-components-ready", configureComponents );
-    </script>
-    <script>
-      RisePlayerConfiguration.configure();
-    </script>
+  <script>
+    function configureComponents() {
+      const image01 = document.querySelector('#rise-image-01');
+
+      image01.addEventListener( "image-error", ( evt ) => {
+        console.log( "image error", evt.detail );
+      } );
+
+      // Uncomment the following line if the image component is marked as non-editable
+      // RisePlayerConfiguration.Helpers.sendStartEvent( image01 );
+    }
+
+    window.addEventListener( "rise-components-ready", configureComponents );
+
+    // Demonstrating how to handle no connection to local messaging via listening for event
+    // Note: the connection can also be checked via RisePlayerConfiguration.LocalMessaging.isConnected()
+    window.addEventListener( "rise-local-messaging-connection", event => {
+      if ( !event.detail.isConnected ) {
+        console.log( "no connection to local messaging");
+      }
+    } );
+  </script>
+  <script>
+    RisePlayerConfiguration.configure();
+  </script>
+
   </body>
 </html>
