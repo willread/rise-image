@@ -1,6 +1,7 @@
 /* eslint-disable no-console */
 
-import { PolymerElement, html } from "@polymer/polymer";
+import { PolymerElement } from "@polymer/polymer/polymer-element.js";
+import { html } from "@polymer/polymer/lib/utils/html-tag.js";
 import { version } from "./rise-image-version.js";
 import "@polymer/iron-image/iron-image.js";
 
