@@ -20,15 +20,13 @@
   <body>
     <test-fixture id="test-block">
       <template>
-        <rise-image sizing="contain"
+        <rise-image
           file="risemedialibrary-30007b45-3df0-4c7b-9f7f-7d8ce6443013/logo.png">
         </rise-image>
       </template>
     </test-fixture>
 
     <script>
-      let licenseMock = { authorized: true };
-
       suite('rise-image', () => {
         let element;
 
@@ -47,108 +45,65 @@
             warning: () => {}
           };
 
-          RisePlayerConfiguration.Licensing = {
-            onStorageLicenseStatusChange: handler => handler( licenseMock )
-          };
-
           element = fixture('test-block');
         });
 
         teardown(() => {
           RisePlayerConfiguration.LocalStorage = {};
           RisePlayerConfiguration.Logger = {};
-          RisePlayerConfiguration.Licensing = {};
         });
 
-        test('it should have a property file', () => {
+        test('it should have a property "file"', () => {
           assert.equal(element.file, SAMPLE_PATH);
         });
 
-        test('it should send an image updated event if an image is available', done => {
-          element.addEventListener('image-status-updated', event => {
-            assert.deepEqual(event.detail, {
-              status: "CURRENT", url: SAMPLE_URL, file: SAMPLE_PATH
-            });
+        test('it should render image when an image is available', (done) => {
+          element.addEventListener('configured', () =>
+            element.dispatchEvent( new CustomEvent( "start" ) )
+          );
+          element.dispatchEvent( new CustomEvent( "start" ) );
 
-            assert.equal(element.url, SAMPLE_URL);
+          setTimeout( () => {
+            assert.equal(element._url, SAMPLE_URL);
             assert.equal(element.$.image.src, SAMPLE_URL);
 
             done();
-          });
+          }, 1000 );
+        });
+
+        test('it should clear image when file attribute is empty', () => {
+          let spy = sinon.spy( element, "_clearImage" );
+
+          element.file = "";
 
           element.addEventListener('configured', () =>
             element.dispatchEvent( new CustomEvent( "start" ) )
           );
           element.dispatchEvent( new CustomEvent( "start" ) );
+
+          assert(spy.called);
+
+          spy.restore();
         });
 
-        test("it should send an 'unlicensed' event if display is unlicensed", done => {
-          element.addEventListener('unlicensed', event => {
-            assert.deepEqual(event.detail, {});
-            licenseMock = { authorized: true };
+        test('it should clear image when file type is invalid', () => {
+          let spy = sinon.spy( element, "_clearImage" );
 
-            done();
-          });
-
-          licenseMock = {authorized: false};
+          element.file = "risemedialibrary-30007b45-3df0-4c7b-9f7f-7d8ce6443013/test.txt";
 
           element.addEventListener('configured', () =>
             element.dispatchEvent( new CustomEvent( "start" ) )
           );
           element.dispatchEvent( new CustomEvent( "start" ) );
+
+          assert(spy.called);
+
+          spy.restore();
         });
+
       });
 
-      suite('rise-data-image image not available', () => {
-        let element;
-
-        setup(() => {
-          RisePlayerConfiguration.LocalStorage = {
-            watchSingleFile: (file, handler) => {
-              setTimeout(
-                () => handler({ status: "NOEXIST" }), 1000
-              );
-            }
-          };
-
-          RisePlayerConfiguration.Logger = {
-            info: () => {},
-            error: () => {},
-            warning: () => {}
-          };
-
-          RisePlayerConfiguration.Licensing = {
-            onStorageLicenseStatusChange: handler => handler( licenseMock )
-          };
-
-          element = fixture('test-block');
-        });
-
-        teardown(() => {
-          RisePlayerConfiguration.LocalStorage = {};
-          RisePlayerConfiguration.Logger = {};
-          RisePlayerConfiguration.Licensing = {};
-        });
-
-        test('it should send an image updated event with NOEXIST status if an image does not exist', done => {
-          element.addEventListener('image-status-updated', event => {
-            assert.deepEqual(event.detail, {
-              status: "NOEXIST", file: SAMPLE_PATH, url: ""
-            });
-
-            assert(!element.url);
-
-            done();
-          });
-
-          element.addEventListener('configured', () =>
-            element.dispatchEvent( new CustomEvent( "start" ) )
-          );
-          element.dispatchEvent( new CustomEvent( "start" ) );
-        });
-      });
-
-      suite('rise-data-image image error', () => {
+      suite('error', () => {
         let element;
 
         setup(() => {
@@ -171,17 +126,12 @@
             warning: () => {}
           };
 
-          RisePlayerConfiguration.Licensing = {
-            onStorageLicenseStatusChange: handler => handler( licenseMock )
-          };
-
           element = fixture('test-block');
         });
 
         teardown(() => {
           RisePlayerConfiguration.LocalStorage = {};
           RisePlayerConfiguration.Logger = {};
-          RisePlayerConfiguration.Licensing = {};
         });
 
         test('it should send an image error event if an image local storage error was received', done => {
@@ -196,6 +146,26 @@
 
             done();
           });
+
+          element.addEventListener('configured', () =>
+            element.dispatchEvent( new CustomEvent( "start" ) )
+          );
+          element.dispatchEvent( new CustomEvent( "start" ) );
+        });
+
+        test('it should send an image error event when file type is invalid', done => {
+          element.addEventListener('image-error', event => {
+            assert(!element.url);
+
+            assert.deepEqual( event.detail, {
+              file: "risemedialibrary-30007b45-3df0-4c7b-9f7f-7d8ce6443013/test.txt",
+              errorMessage: "Invalid file format"
+            });
+
+            done();
+          });
+
+          element.file = "risemedialibrary-30007b45-3df0-4c7b-9f7f-7d8ce6443013/test.txt";
 
           element.addEventListener('configured', () =>
             element.dispatchEvent( new CustomEvent( "start" ) )
@@ -233,7 +203,7 @@
         } );
       } );
 
-      suite('rise-data-image on preview', () => {
+      suite('rise-image on preview', () => {
         let element;
 
         setup(() => {
@@ -253,23 +223,51 @@
           RisePlayerConfiguration.Logger = {};
         });
 
-        test('it should send an image updated event', done => {
-          element.addEventListener('image-status-updated', event => {
-            assert.deepEqual(event.detail, {
-              status: "CURRENT", url: SAMPLE_URL, file: SAMPLE_PATH
-            });
-
-            assert.equal(element.url, SAMPLE_URL);
-
-            done();
-          });
-
+        test('it should render an image', done => {
           element.addEventListener('configured', () =>
             element.dispatchEvent( new CustomEvent( "start" ) )
           );
           element.dispatchEvent( new CustomEvent( "start" ) );
+
+          setTimeout( () => {
+            assert.equal(element._url, SAMPLE_URL);
+            assert.equal(element.$.image.src, SAMPLE_URL);
+
+            done();
+          }, 1000 );
         });
       });
+
+      suite( "_reset", () => {
+        let element,
+          startStub;
+
+        setup( () => {
+          RisePlayerConfiguration.Logger = {
+            info: () => {}
+          };
+
+          element = fixture('test-block');
+
+          startStub = sinon.stub( element, "_start" );
+        } );
+
+        teardown( () => {
+          RisePlayerConfiguration.Logger = {};
+          startStub.restore();
+        } );
+
+        test( "should call _start() if not initial start", () => {
+          // need to remove the stub and add back on every test
+          element._initialStart = false;
+          element._watchInitiated = true;
+          element._reset();
+
+          assert.isFalse( element._watchInitiated );
+          assert.isTrue( startStub.calledOnce );
+        } );
+
+      } );
 
     </script>
   </body>
