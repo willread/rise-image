@@ -45,12 +45,8 @@ class RiseImage extends PolymerElement {
     return "image-error";
   }
 
-  static get EVENT_LICENSED() {
-    return "licensed";
-  }
-
-  static get EVENT_UNLICENSED() {
-    return "unlicensed";
+  static get EVENT_SVG_USAGE() {
+    return "svg-usage";
   }
 
   static get LOG_TYPE_INFO() {
@@ -144,6 +140,45 @@ class RiseImage extends PolymerElement {
     return false;
   }
 
+  _getDataUrlFromSVGLocalUrl( localUrl ) {
+    return new Promise(( resolve, reject ) => {
+      const xhr = new XMLHttpRequest();
+
+      xhr.overrideMimeType( "image/svg+xml" );
+
+      xhr.onload = () => {
+        if ( xhr.status !== 200 ) {
+          reject( `${ xhr.status } : ${ xhr.statusText }` );
+        }
+
+        let reader = new FileReader();
+
+        reader.onloadend = () => {
+          if ( reader.error ) {
+            reject( "Read failed" );
+          }
+
+          this._log( RiseImage.LOG_TYPE_INFO, RiseImage.EVENT_SVG_USAGE, { svg_details: {
+            blob_size: xhr.response.size,
+            data_url_length: reader.result.length
+          } }, { storage: this._getStorageData() });
+
+          resolve( reader.result );
+        };
+
+        reader.readAsDataURL( xhr.response );
+      };
+
+      xhr.onerror = event => {
+        reject( `Request failed: ${ JSON.stringify( event )}` );
+      };
+
+      xhr.open( "GET", localUrl );
+      xhr.responseType = "blob";
+      xhr.send();
+    });
+  }
+
   _filterInvalidFileTypes() {
     if ( this.file ) {
       if ( !this._isValidFileType( this.file )) {
@@ -157,7 +192,18 @@ class RiseImage extends PolymerElement {
   }
 
   _renderImage( url ) {
-    this.$.image.src = url
+    if ( this._getStorageFileFormat( this.file ) === "svg" ) {
+      this._getDataUrlFromSVGLocalUrl( url )
+        .then( dataUrl => {
+          this.$.image.src = dataUrl;
+        })
+        .catch( error => {
+          this._log( RiseImage.LOG_TYPE_ERROR, RiseImage.EVENT_IMAGE_ERROR, error, { storage: this._getStorageData() });
+          this._sendImageEvent( RiseImage.EVENT_IMAGE_ERROR, { file: this.file, error });
+        });
+    } else {
+      this.$.image.src = url;
+    }
   }
 
   _clearImage() {
