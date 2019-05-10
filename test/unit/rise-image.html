@@ -273,6 +273,61 @@
 
       } );
 
+      suite( "_getDataUrlFromSVGLocalUrl", () => {
+
+        let element,
+          xhr,
+          requests;
+
+        setup( () => {
+          RisePlayerConfiguration.Logger = {
+            info: () => {}
+          };
+
+          element = fixture('test-block');
+
+          xhr = sinon.useFakeXMLHttpRequest();
+          requests = [];
+
+          xhr.onCreate = ( request ) => {
+            requests.push( request );
+          };
+        });
+
+        teardown( () => {
+          RisePlayerConfiguration.Logger = {};
+          xhr.restore();
+        });
+
+        test( "should get a data url response", function() {
+          const svg = `...`;
+          const blob = new Blob([svg], {type: 'image/svg+xml'});
+
+          let promise = element._getDataUrlFromSVGLocalUrl( "" )
+            .then( function( dataUrl ) {
+              assert( dataUrl );
+              assert.include( dataUrl, "data:image/svg+xml;base64");
+            });
+
+          requests[ 0 ].respond( 200, { "Content-Type": "blob" }, `${blob}` );
+
+          return promise;
+        });
+
+        test( "should return an error if xhr request fails", function() {
+          let promise = element._getDataUrlFromSVGLocalUrl( "" )
+            .catch( error => {
+              assert( error );
+              assert.include( error, "404" );
+            } );
+
+          requests[ 0 ].respond( 404, {}, "" );
+
+          return promise;
+        });
+
+      });
+
     </script>
   </body>
 </html>

@@ -182,6 +182,75 @@
         }, watchTimeoutDuration );
     } );
 
+    test( "should log 'svg-usage' event with svg details", done => {
+        const filePath = "risemedialibrary-7fa5ee92-7deb-450b-a8d5-e5ed648c575f/rise-image-demo/PokemonGO-Team-Logos-Instinct.svg";
+
+        RisePlayerConfiguration.LocalStorage = {
+            watchSingleFile: ( file, handler ) => {
+                setTimeout(
+                  () => handler({ status: "CURRENT", fileUrl: `https://storage.googleapis.com/${filePath}` }), watchTimeoutDuration
+                );
+            }
+        };
+
+          element.file = "risemedialibrary-7fa5ee92-7deb-450b-a8d5-e5ed648c575f/rise-image-demo/PokemonGO-Team-Logos-Instinct.svg";
+          element.dispatchEvent( new CustomEvent( "start" ));
+
+          setTimeout(() => {
+              assert.deepEqual( RisePlayerConfiguration.Logger.info.args[ 2 ][ 0 ], componentData );
+              assert.equal( RisePlayerConfiguration.Logger.info.args[ 2 ][ 1 ], "svg-usage");
+              assert.property( RisePlayerConfiguration.Logger.info.args[ 2 ][ 2 ].svg_details, "blob_size");
+              assert.property( RisePlayerConfiguration.Logger.info.args[ 2 ][ 2 ].svg_details, "data_url_length");
+              assert.deepEqual( RisePlayerConfiguration.Logger.info.args[ 2 ][ 3 ], {
+                  storage: {
+                      configuration: "storage file",
+                      file_form: "svg",
+                      file_path: filePath,
+                      local_url: `https://storage.googleapis.com/${filePath}`
+                  }
+              } );
+
+              done();
+          }, 3000 );
+    });
+
+    test("should log an 'image-error' when rendering an SVG file files", done => {
+        sinon.stub(element, "_getDataUrlFromSVGLocalUrl").callsFake(() => {
+            return Promise.reject("Request failed: 404: Not found");
+        });
+
+        const filePath = "risemedialibrary-7fa5ee92-7deb-450b-a8d5-e5ed648c575f/rise-image-demo/PokemonGO-Team-Logos-Instinct.svg";
+
+        RisePlayerConfiguration.LocalStorage = {
+            watchSingleFile: ( file, handler ) => {
+                setTimeout(
+                  () => handler({ status: "CURRENT", fileUrl: `https://storage.googleapis.com/${filePath}` }), watchTimeoutDuration
+                );
+            }
+        };
+
+        element.file = "risemedialibrary-7fa5ee92-7deb-450b-a8d5-e5ed648c575f/rise-image-demo/PokemonGO-Team-Logos-Instinct.svg";
+        element.dispatchEvent( new CustomEvent( "start" ));
+
+        setTimeout(() => {
+            assert.deepEqual( RisePlayerConfiguration.Logger.error.args[ 0 ][ 0 ], componentData );
+            assert.equal( RisePlayerConfiguration.Logger.error.args[ 0 ][ 1 ], "image-error");
+            assert.equal( RisePlayerConfiguration.Logger.error.args[ 0 ][ 2 ], "Request failed: 404: Not found");
+            assert.deepEqual( RisePlayerConfiguration.Logger.error.args[ 0 ][ 3 ], {
+                storage: {
+                    configuration: "storage file",
+                    file_form: "svg",
+                    file_path: filePath,
+                    local_url: `https://storage.googleapis.com/${filePath}`
+                }
+            } );
+
+            element._getDataUrlFromSVGLocalUrl.restore();
+            done();
+        }, watchTimeoutDuration );
+
+    })
+
   });
 </script>
 </body>
