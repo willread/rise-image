@@ -37,12 +37,23 @@
     file="risemedialibrary-7fa5ee92-7deb-450b-a8d5-e5ed648c575f/stu-testing/images/rise-image-demo/Costa Rican Frog.jpg">
   </rise-image>
 
+  <rise-image
+    id="rise-image-02"
+    label="SVG Image"
+    file="risemedialibrary-7fa5ee92-7deb-450b-a8d5-e5ed648c575f/rise-image-demo/PokemonGO-Team-Logos-Instinct.svg">
+  </rise-image>
+
   <script>
     function configureComponents() {
-      const image01 = document.querySelector('#rise-image-01');
+      const image01 = document.querySelector('#rise-image-01'),
+        image02 = document.querySelector('#rise-image-02');
 
       image01.addEventListener( "image-error", ( evt ) => {
-        console.log( "image error", evt.detail );
+        console.log( "image 1 error", evt.detail );
+      } );
+
+      image02.addEventListener( "image-error", ( evt ) => {
+        console.log( "image 2 error", evt.detail );
       } );
 
       // Uncomment the following line if the image component is marked as non-editable
