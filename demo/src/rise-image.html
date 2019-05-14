@@ -29,19 +29,42 @@
         }
       }
     </script>
+    <style>
+      #image01Wrapper {
+        width: 350px;
+        height: 350px;
+        position: relative;
+        background-color: beige;
+      }
+
+      #image02Wrapper {
+        width: 100%;
+        height: 350px;
+        position: relative;
+        background-color: darkgrey;
+      }
+    </style>
   </head>
   <body>
-  <rise-image
-    id="rise-image-01"
-    label="My Image"
-    file="risemedialibrary-7fa5ee92-7deb-450b-a8d5-e5ed648c575f/stu-testing/images/rise-image-demo/Costa Rican Frog.jpg">
-  </rise-image>
+  <div id="image01Wrapper">
+    <rise-image
+      id="rise-image-01"
+      label="My Image"
+      responsive
+      file="risemedialibrary-7fa5ee92-7deb-450b-a8d5-e5ed648c575f/rise-image-demo/Costa Rican Frog.jpg">
+    </rise-image>
+  </div>
 
-  <rise-image
-    id="rise-image-02"
-    label="SVG Image"
-    file="risemedialibrary-7fa5ee92-7deb-450b-a8d5-e5ed648c575f/rise-image-demo/PokemonGO-Team-Logos-Instinct.svg">
-  </rise-image>
+
+  <div id="image02Wrapper">
+    <rise-image
+      id="rise-image-02"
+      label="SVG Image"
+      width="200"
+      height="200"
+      file="risemedialibrary-7fa5ee92-7deb-450b-a8d5-e5ed648c575f/rise-image-demo/PokemonGO-Team-Logos-Instinct.svg">
+    </rise-image>
+  </div>
 
   <script>
     function configureComponents() {
