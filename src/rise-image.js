@@ -2,7 +2,6 @@
 
 import { PolymerElement } from "@polymer/polymer/polymer-element.js";
 import { html } from "@polymer/polymer/lib/utils/html-tag.js";
-import { updateStyles } from '@polymer/polymer/lib/mixins/element-mixin.js';
 import { version } from "./rise-image-version.js";
 import "@polymer/iron-image/iron-image.js";
 
@@ -27,11 +26,11 @@ class RiseImage extends PolymerElement {
         value: ""
       },
       width: {
-        type: Number,
+        type: String,
         value: null
       },
       height: {
-        type: Number,
+        type: String,
         value: null
       },
       sizing: {
@@ -219,8 +218,8 @@ class RiseImage extends PolymerElement {
     if ( this.responsive ) {
       this.$.image.updateStyles({ "--iron-image-width": "100%" });
     } else {
-      this.$.image.width = this.width;
-      this.$.image.height = this.height;
+      this.$.image.width = isNaN( this.width ) ? parseInt( this.width, 10 ) : this.width;
+      this.$.image.height = isNaN( this.height ) ? parseInt( this.height, 10 ) : this.height;
       this.$.image.sizing = this.sizing;
     }
 
