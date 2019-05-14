@@ -8,6 +8,13 @@ import "@polymer/iron-image/iron-image.js";
 class RiseImage extends PolymerElement {
   static get template() {
     return html`
+      <style>
+        :host {
+          display: inline-block;
+          overflow: hidden;
+          position: relative;
+        }
+      </style>
       <iron-image id="image"></iron-image>
     `;
   }
@@ -17,6 +24,22 @@ class RiseImage extends PolymerElement {
       file: {
         type: String,
         value: ""
+      },
+      width: {
+        type: String,
+        value: null
+      },
+      height: {
+        type: String,
+        value: null
+      },
+      sizing: {
+        type: String,
+        value: "contain"
+      },
+      responsive: {
+        type: Boolean,
+        value: false
       }
     };
   }
@@ -192,6 +215,14 @@ class RiseImage extends PolymerElement {
   }
 
   _renderImage( url ) {
+    if ( this.responsive ) {
+      this.$.image.updateStyles({ "--iron-image-width": "100%" });
+    } else {
+      this.$.image.width = isNaN( this.width ) ? parseInt( this.width, 10 ) : this.width;
+      this.$.image.height = isNaN( this.height ) ? parseInt( this.height, 10 ) : this.height;
+      this.$.image.sizing = this.sizing;
+    }
+
     if ( this._getStorageFileFormat( this.file ) === "svg" ) {
       this._getDataUrlFromSVGLocalUrl( url )
         .then( dataUrl => {
