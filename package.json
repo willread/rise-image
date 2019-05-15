@@ -10,6 +10,7 @@
   "author": "Rise Vision",
   "license": "GPL-3.0+",
   "main": "src/rise-image.js",
+  "browser": "src/rise-image.js",
   "scripts": {
     "build": "polymer build && ./node_modules/common-component/extract-source.sh rise-image",
     "test": "eslint . && polymer test"
