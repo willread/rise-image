@@ -48,7 +48,7 @@ class RiseImage extends PolymerElement {
   // a comma-separated list of one or more dependencies.
   static get observers() {
     return [
-      "_reset(file)"
+      "_reset(files)"
     ]
   }
 
@@ -262,7 +262,7 @@ class RiseImage extends PolymerElement {
         })
         .catch( error => {
           this._log( RiseImage.LOG_TYPE_ERROR, RiseImage.EVENT_IMAGE_ERROR, error, { storage: this._getStorageData( file, url ) });
-          this._sendImageEvent( RiseImage.EVENT_IMAGE_ERROR, { file: file, error });
+          this._sendImageEvent( RiseImage.EVENT_IMAGE_ERROR, { file: file, errorMessage: error });
         });
     } else {
       this.$.image.src = url;
@@ -274,7 +274,7 @@ class RiseImage extends PolymerElement {
   }
 
   _start() {
-    if ( !this._isValidFiles()) {
+    if ( !this._isValidFiles( this.files )) {
       this._clearImage();
       return;
     }
