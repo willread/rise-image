@@ -21,7 +21,7 @@ class RiseImage extends PolymerElement {
 
   static get properties() {
     return {
-      file: {
+      files: {
         type: String,
         value: ""
       },
@@ -48,7 +48,7 @@ class RiseImage extends PolymerElement {
   // a comma-separated list of one or more dependencies.
   static get observers() {
     return [
-      "_reset(file)"
+      "_reset(files)"
     ]
   }
 
@@ -66,6 +66,10 @@ class RiseImage extends PolymerElement {
 
   static get EVENT_IMAGE_ERROR() {
     return "image-error";
+  }
+
+  static get EVENT_IMAGE_RESET() {
+    return "image-reset";
   }
 
   static get EVENT_SVG_USAGE() {
@@ -93,8 +97,8 @@ class RiseImage extends PolymerElement {
 
     this._watchInitiated = false;
     this._initialStart = true;
-    this._invalidFileType = false;
-    this._url = "";
+    this._filesList = [];
+    this._temporaryFlag = false;
   }
 
   ready() {
@@ -125,16 +129,20 @@ class RiseImage extends PolymerElement {
     };
   }
 
-  _getStorageData() {
+  _getStorageData( file, url ) {
     return {
       configuration: "storage file",
-      file_form: this._getStorageFileFormat( this.file ),
-      file_path: this.file,
-      local_url: this._url
+      file_form: this._getStorageFileFormat( file ),
+      file_path: file,
+      local_url: url || ""
     }
   }
 
   _getStorageFileFormat( filePath ) {
+    if ( !filePath || typeof filePath !== "string" ) {
+      return "";
+    }
+
     return filePath.substr( filePath.lastIndexOf( "." ) + 1 ).toLowerCase();
   }
 
@@ -142,9 +150,9 @@ class RiseImage extends PolymerElement {
     if ( !this._initialStart ) {
 
       this._watchInitiated = false;
-      this._url = "";
+      this._filesList = [];
 
-      this._log( RiseImage.LOG_TYPE_INFO, "reset", null, { storage: this._getStorageData() });
+      this._log( RiseImage.LOG_TYPE_INFO, RiseImage.EVENT_IMAGE_RESET, { files: this.files });
       this._start();
     }
   }
@@ -163,7 +171,7 @@ class RiseImage extends PolymerElement {
     return false;
   }
 
-  _getDataUrlFromSVGLocalUrl( localUrl ) {
+  _getDataUrlFromSVGLocalUrl( file, localUrl ) {
     return new Promise(( resolve, reject ) => {
       const xhr = new XMLHttpRequest();
 
@@ -184,7 +192,7 @@ class RiseImage extends PolymerElement {
           this._log( RiseImage.LOG_TYPE_INFO, RiseImage.EVENT_SVG_USAGE, { svg_details: {
             blob_size: xhr.response.size,
             data_url_length: reader.result.length
-          } }, { storage: this._getStorageData() });
+          } }, { storage: this._getStorageData( file, localUrl ) });
 
           resolve( reader.result );
         };
@@ -202,19 +210,43 @@ class RiseImage extends PolymerElement {
     });
   }
 
-  _filterInvalidFileTypes() {
-    if ( this.file ) {
-      if ( !this._isValidFileType( this.file )) {
-        const errorMessage = "Invalid file format";
-
-        this._log( RiseImage.LOG_TYPE_ERROR, RiseImage.EVENT_IMAGE_ERROR, { errorMessage }, { storage: this._getStorageData() });
-        this._sendImageEvent( RiseImage.EVENT_IMAGE_ERROR, { file: this.file, errorMessage });
-        this._invalidFileType = true;
-      }
+  _isValidFiles( files ) {
+    if ( !files || typeof files !== "string" ) {
+      return false;
     }
+
+    // single symbol
+    if ( files.indexOf( "|" ) === -1 ) {
+      return true;
+    }
+
+    return files.split( "|" ).indexOf( "" ) === -1;
   }
 
-  _renderImage( url ) {
+  _filterInvalidFileTypes( files ) {
+    let invalidFiles = [];
+    const filteredFiles = files.filter( file => {
+      const valid = this._isValidFileType( file );
+
+      if ( !valid ) {
+        invalidFiles.push( file );
+      }
+
+      return valid;
+    });
+
+    invalidFiles.forEach( invalidFile => {
+      this._log( RiseImage.LOG_TYPE_ERROR, RiseImage.EVENT_IMAGE_ERROR, { errorMessage: "Invalid file format" }, { storage: this._getStorageData( invalidFile ) });
+    });
+
+    if ( !filteredFiles || filteredFiles.length === 0 ) {
+      this._sendImageEvent( RiseImage.EVENT_IMAGE_ERROR, { files, errorMessage: "All file formats are invalid" });
+    }
+
+    return filteredFiles;
+  }
+
+  _renderImage( file, url ) {
     if ( this.responsive ) {
       this.$.image.updateStyles({ "--iron-image-width": "100%" });
     } else {
@@ -223,29 +255,34 @@ class RiseImage extends PolymerElement {
       this.$.image.sizing = this.sizing;
     }
 
-    if ( this._getStorageFileFormat( this.file ) === "svg" ) {
-      this._getDataUrlFromSVGLocalUrl( url )
+    if ( this._getStorageFileFormat( file ) === "svg" ) {
+      this._getDataUrlFromSVGLocalUrl( file, url )
         .then( dataUrl => {
           this.$.image.src = dataUrl;
         })
         .catch( error => {
-          this._log( RiseImage.LOG_TYPE_ERROR, RiseImage.EVENT_IMAGE_ERROR, error, { storage: this._getStorageData() });
-          this._sendImageEvent( RiseImage.EVENT_IMAGE_ERROR, { file: this.file, error });
+          this._log( RiseImage.LOG_TYPE_ERROR, RiseImage.EVENT_IMAGE_ERROR, error, { storage: this._getStorageData( file, url ) });
+          this._sendImageEvent( RiseImage.EVENT_IMAGE_ERROR, { file: file, errorMessage: error });
         });
     } else {
       this.$.image.src = url;
     }
   }
 
-  _clearImage() {
+  _clearDisplayedImage() {
     this.$.image.src = "";
   }
 
   _start() {
-    this._filterInvalidFileTypes();
+    if ( !this._isValidFiles( this.files )) {
+      this._clearDisplayedImage();
+      return;
+    }
 
-    if ( !this.file || this._invalidFileType ) {
-      this._clearImage();
+    this._filesList = this._filterInvalidFileTypes( this.files.split( "|" ));
+
+    if ( !this._filesList || !this._filesList.length || this._filesList.length === 0 ) {
+      this._clearDisplayedImage();
       return;
     }
 
@@ -254,9 +291,12 @@ class RiseImage extends PolymerElement {
     }
 
     if ( !this._watchInitiated ) {
-      RisePlayerConfiguration.LocalStorage.watchSingleFile(
-        this.file, message => this._handleSingleFileUpdate( message )
-      );
+      this._filesList.forEach( file => {
+        RisePlayerConfiguration.LocalStorage.watchSingleFile(
+          file, message => this._handleSingleFileUpdate( message )
+        );
+      });
+
       this._watchInitiated = true;
     }
   }
@@ -264,8 +304,7 @@ class RiseImage extends PolymerElement {
   _handleStartForPreview() {
     // check license for preview will be implemented in some other epic later
 
-    this._url = RiseImage.STORAGE_PREFIX + this.file;
-    this._handleImageStatusUpdated( "CURRENT" );
+    // TODO: handling preview coming soon
   }
 
   _handleStart() {
@@ -273,7 +312,7 @@ class RiseImage extends PolymerElement {
       this._initialStart = false;
 
       if ( !RisePlayerConfiguration.isPreview()) {
-        this._log( RiseImage.LOG_TYPE_INFO, RiseImage.EVENT_START, null, { storage: this._getStorageData() });
+        this._log( RiseImage.LOG_TYPE_INFO, RiseImage.EVENT_START, { files: this.files });
       }
 
       this._start();
@@ -297,36 +336,43 @@ class RiseImage extends PolymerElement {
   }
 
   _handleSingleFileError( message ) {
-    const details = { file: this.file, errorMessage: message.errorMessage, errorDetail: message.errorDetail };
+    const details = { file: message.filePath, errorMessage: message.errorMessage, errorDetail: message.errorDetail };
 
     this._log( RiseImage.LOG_TYPE_ERROR, RiseImage.EVENT_IMAGE_ERROR, {
       errorMessage: message.errorMessage,
       errorDetail: message.errorDetail
-    }, { storage: this._getStorageData() });
+    }, { storage: this._getStorageData( message.filePath, message.fileUrl ) });
 
     this._sendImageEvent( RiseImage.EVENT_IMAGE_ERROR, details );
   }
 
   _handleSingleFileUpdate( message ) {
-    if ( !message.status ) {
+    if ( !message.status || !message.filePath ) {
       return;
     }
-
-    this._url = message.fileUrl || "";
 
     if ( message.status === "FILE-ERROR" ) {
       this._handleSingleFileError( message );
       return;
     }
 
-    this._handleImageStatusUpdated( message.status );
+    this._handleImageStatusUpdated( message );
   }
 
-  _handleImageStatusUpdated( status ) {
-    this._log( RiseImage.LOG_TYPE_INFO, RiseImage.EVENT_IMAGE_STATUS_UPDATED, { status: status }, { storage: this._getStorageData() });
+  _handleImageStatusUpdated( message ) {
+    this._log( RiseImage.LOG_TYPE_INFO, RiseImage.EVENT_IMAGE_STATUS_UPDATED, { status: message.status }, { storage: this._getStorageData( message.filePath, message.fileUrl ) });
 
-    if ( status === "CURRENT" ) {
-      this._renderImage( this._url );
+    if ( message.status === "CURRENT" ) {
+      // TODO: temporarily rendering only first image ready
+      console.log( message );
+      if ( !this._temporaryFlag ) {
+        this._temporaryFlag = true;
+        this._renderImage( message.filePath, message.fileUrl );
+      }
+    }
+
+    if ( message.status === "DELETED" ) {
+      // TODO: handle this when managing transitioning multiple files
     }
   }
 

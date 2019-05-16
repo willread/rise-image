@@ -25,307 +25,202 @@
     <test-fixture id="test-block">
       <template>
         <rise-image
-          file="risemedialibrary-30007b45-3df0-4c7b-9f7f-7d8ce6443013/logo.png">
+          width="300"
+          height="240"
+          sizing="contain"
+          files="risemedialibrary-30007b45-3df0-4c7b-9f7f-7d8ce6443013/logo.png">
         </rise-image>
       </template>
     </test-fixture>
 
     <script>
-      suite('rise-image', () => {
+      suite( "rise-image", () => {
         let element;
 
         setup(() => {
-          RisePlayerConfiguration.LocalStorage = {
-            watchSingleFile: (file, handler) => {
-              setTimeout(
-                () => handler({ status: "CURRENT", fileUrl: SAMPLE_URL }), 1000
-              );
-            }
-          };
-
           RisePlayerConfiguration.Logger = {
             info: () => {},
-            error: () => {},
-            warning: () => {}
-          };
-
-          element = fixture('test-block');
-        });
-
-        teardown(() => {
-          RisePlayerConfiguration.LocalStorage = {};
-          RisePlayerConfiguration.Logger = {};
-        });
-
-        test('it should have a property "file"', () => {
-          assert.equal(element.file, SAMPLE_PATH);
-        });
-
-        test('it should render image when an image is available', (done) => {
-          element.addEventListener('configured', () =>
-            element.dispatchEvent( new CustomEvent( "start" ) )
-          );
-          element.dispatchEvent( new CustomEvent( "start" ) );
-
-          setTimeout( () => {
-            assert.equal(element._url, SAMPLE_URL);
-            assert.equal(element.$.image.src, SAMPLE_URL);
-
-            done();
-          }, 1000 );
-        });
-
-        test('it should clear image when file attribute is empty', () => {
-          let spy = sinon.spy( element, "_clearImage" );
-
-          element.file = "";
-
-          element.addEventListener('configured', () =>
-            element.dispatchEvent( new CustomEvent( "start" ) )
-          );
-          element.dispatchEvent( new CustomEvent( "start" ) );
-
-          assert(spy.called);
-
-          spy.restore();
-        });
-
-        test('it should clear image when file type is invalid', () => {
-          let spy = sinon.spy( element, "_clearImage" );
-
-          element.file = "risemedialibrary-30007b45-3df0-4c7b-9f7f-7d8ce6443013/test.txt";
-
-          element.addEventListener('configured', () =>
-            element.dispatchEvent( new CustomEvent( "start" ) )
-          );
-          element.dispatchEvent( new CustomEvent( "start" ) );
-
-          assert(spy.called);
-
-          spy.restore();
-        });
-
-      });
-
-      suite('error', () => {
-        let element;
-
-        setup(() => {
-          RisePlayerConfiguration.LocalStorage = {
-            watchSingleFile: (file, handler) => {
-              setTimeout(
-                () => handler({
-                  fileUrl: null,
-                  status: "FILE-ERROR",
-                  errorMessage: "image download error",
-                  errorDetail: "network failure"
-                }), 1000
-              );
-            }
-          };
-
-          RisePlayerConfiguration.Logger = {
-            info: () => {},
-            error: () => {},
-            warning: () => {}
-          };
-
-          element = fixture('test-block');
-        });
-
-        teardown(() => {
-          RisePlayerConfiguration.LocalStorage = {};
-          RisePlayerConfiguration.Logger = {};
-        });
-
-        test('it should send an image error event if an image local storage error was received', done => {
-          element.addEventListener('image-error', event => {
-            assert(!element.url);
-
-            assert.deepEqual( event.detail, {
-              file: SAMPLE_PATH,
-              errorMessage: "image download error",
-              errorDetail: "network failure"
-            });
-
-            done();
-          });
-
-          element.addEventListener('configured', () =>
-            element.dispatchEvent( new CustomEvent( "start" ) )
-          );
-          element.dispatchEvent( new CustomEvent( "start" ) );
-        });
-
-        test('it should send an image error event when file type is invalid', done => {
-          element.addEventListener('image-error', event => {
-            assert(!element.url);
-
-            assert.deepEqual( event.detail, {
-              file: "risemedialibrary-30007b45-3df0-4c7b-9f7f-7d8ce6443013/test.txt",
-              errorMessage: "Invalid file format"
-            });
-
-            done();
-          });
-
-          element.file = "risemedialibrary-30007b45-3df0-4c7b-9f7f-7d8ce6443013/test.txt";
-
-          element.addEventListener('configured', () =>
-            element.dispatchEvent( new CustomEvent( "start" ) )
-          );
-          element.dispatchEvent( new CustomEvent( "start" ) );
-        });
-      });
-
-      suite( "_getStorageFileFormat", () => {
-        let element;
-
-        setup(() => {
-          RisePlayerConfiguration.LocalStorage = {
-            watchSingleFile: () => {}
-          };
-
-          RisePlayerConfiguration.Logger = {
-            info: () => {},
+            warning: () => {},
             error: () => {}
           };
 
-          element = fixture('test-block');
+          element = fixture("test-block");
         });
 
-        teardown(() => {
-          RisePlayerConfiguration.LocalStorage = {};
-          RisePlayerConfiguration.Logger = {};
-        });
+        suite( "_isValidFiles", () => {
+          test( "should return true if 'files' attribute is a non-empty String", () => {
+            assert.isTrue( element._isValidFiles( "test" ) );
+          } );
 
-        test( "should return correct format from file path", () => {
-          assert.equal( element._getStorageFileFormat( SAMPLE_PATH ), "png" );
-          assert.equal( element._getStorageFileFormat( "risemedialibrary-abc123/logo.jpg" ), "jpg" );
-          assert.equal( element._getStorageFileFormat( "risemedialibrary-abc123/logo.jpg.svg" ), "svg" );
-          assert.equal( element._getStorageFileFormat( "" ), "" );
-        } );
-      } );
+          test( "should return false if 'files' attribute is not a String or empty String", () => {
+            assert.isFalse( element._isValidFiles( 123 ) );
+            assert.isFalse( element._isValidFiles( ["test1|test2"] ) );
+            assert.isFalse( element._isValidFiles( "" ) );
+          } );
 
-      suite('rise-image on preview', () => {
-        let element;
+          test( "should return true if 'files' attribute is a String containing values separated by '|'", () => {
+            assert.isTrue( element._isValidFiles( "test1|test2|test3" ) );
+          } );
 
-        setup(() => {
-          RisePlayerConfiguration.isPreview = () => true;
-
-          RisePlayerConfiguration.Logger = {
-            info: () => {},
-            error: () => {}
-          };
-
-          element = fixture('test-block');
-        });
-
-        teardown(() => {
-          RisePlayerConfiguration.isPreview = () => false;
-
-          RisePlayerConfiguration.Logger = {};
-        });
-
-        test('it should render an image', done => {
-          element.addEventListener('configured', () =>
-            element.dispatchEvent( new CustomEvent( "start" ) )
-          );
-          element.dispatchEvent( new CustomEvent( "start" ) );
-
-          setTimeout( () => {
-            assert.equal(element._url, SAMPLE_URL);
-            assert.equal(element.$.image.src, SAMPLE_URL);
-
-            done();
-          }, 1000 );
-        });
-      });
-
-      suite( "_reset", () => {
-        let element,
-          startStub;
-
-        setup( () => {
-          RisePlayerConfiguration.Logger = {
-            info: () => {}
-          };
-
-          element = fixture('test-block');
-
-          startStub = sinon.stub( element, "_start" );
+          test( "should return false if 'files' attribute contains '|' with any empty value", () => {
+            assert.isFalse( element._isValidFiles( "test|" ) );
+            assert.isFalse( element._isValidFiles( "|test" ) );
+            assert.isFalse( element._isValidFiles( "|" ) );
+            assert.isFalse( element._isValidFiles( "test1|test2||test3" ) );
+          } );
         } );
 
-        teardown( () => {
-          RisePlayerConfiguration.Logger = {};
-          startStub.restore();
+        suite( "_getStorageFileFormat", () => {
+          test( "should return correct format from file path", () => {
+            assert.equal( element._getStorageFileFormat( SAMPLE_PATH ), "png" );
+            assert.equal( element._getStorageFileFormat( "risemedialibrary-abc123/logo.jpg" ), "jpg" );
+            assert.equal( element._getStorageFileFormat( "risemedialibrary-abc123/logo.jpg.svg" ), "svg" );
+            assert.equal( element._getStorageFileFormat( "" ), "" );
+          } );
         } );
 
-        test( "should call _start() if not initial start", () => {
-          // need to remove the stub and add back on every test
-          element._initialStart = false;
-          element._watchInitiated = true;
-          element._reset();
-
-          assert.isFalse( element._watchInitiated );
-          assert.isTrue( startStub.calledOnce );
-        } );
-
-      } );
-
-      suite( "_getDataUrlFromSVGLocalUrl", () => {
-
-        let element,
-          xhr,
-          requests;
-
-        setup( () => {
-          RisePlayerConfiguration.Logger = {
-            info: () => {}
-          };
-
-          element = fixture('test-block');
-
-          xhr = sinon.useFakeXMLHttpRequest();
-          requests = [];
-
-          xhr.onCreate = ( request ) => {
-            requests.push( request );
-          };
-        });
-
-        teardown( () => {
-          RisePlayerConfiguration.Logger = {};
-          xhr.restore();
-        });
-
-        test( "should get a data url response", function() {
-          const svg = `...`;
-          const blob = new Blob([svg], {type: 'image/svg+xml'});
-
-          let promise = element._getDataUrlFromSVGLocalUrl( "" )
-            .then( function( dataUrl ) {
-              assert( dataUrl );
-              assert.include( dataUrl, "data:image/svg+xml;base64");
-            });
-
-          requests[ 0 ].respond( 200, { "Content-Type": "blob" }, `${blob}` );
-
-          return promise;
-        });
-
-        test( "should return an error if xhr request fails", function() {
-          let promise = element._getDataUrlFromSVGLocalUrl( "" )
-            .catch( error => {
-              assert( error );
-              assert.include( error, "404" );
+        suite( "_getStorageData", () => {
+          test( "should return correct storage data", () => {
+            assert.deepEqual( element._getStorageData( "risemedialibrary-abc123/logo.jpg", "file:///path-to-file" ), {
+              configuration: "storage file",
+              file_form: "jpg",
+              file_path: "risemedialibrary-abc123/logo.jpg",
+              local_url: "file:///path-to-file"
             } );
+          } );
 
-          requests[ 0 ].respond( 404, {}, "" );
+          test( "should handle empty fileUrl value", () => {
+            assert.deepEqual( element._getStorageData( "risemedialibrary-abc123/logo.jpg" ), {
+              configuration: "storage file",
+              file_form: "jpg",
+              file_path: "risemedialibrary-abc123/logo.jpg",
+              local_url: ""
+            } );
+          } );
+        } );
 
-          return promise;
+        suite( "_getDataUrlFromSVGLocalUrl", () => {
+          let xhr,
+            requests;
+
+          setup( () => {
+            xhr = sinon.useFakeXMLHttpRequest();
+            requests = [];
+
+            xhr.onCreate = ( request ) => {
+              requests.push( request );
+            };
+          });
+
+          teardown( () => {
+            xhr.restore();
+          });
+
+          test( "should get a data url response", function() {
+            const svg = `...`;
+            const blob = new Blob([svg], {type: 'image/svg+xml'});
+
+            let promise = element._getDataUrlFromSVGLocalUrl( "" )
+              .then( function( dataUrl ) {
+                assert( dataUrl );
+                assert.include( dataUrl, "data:image/svg+xml;base64");
+              });
+
+            requests[ 0 ].respond( 200, { "Content-Type": "blob" }, `${blob}` );
+
+            return promise;
+          });
+
+          test( "should return an error if xhr request fails", function() {
+            let promise = element._getDataUrlFromSVGLocalUrl( "" )
+              .catch( error => {
+                assert( error );
+                assert.include( error, "404" );
+              } );
+
+            requests[ 0 ].respond( 404, {}, "" );
+
+            return promise;
+          });
+
         });
 
+        suite( "_filterInvalidFileTypes", () => {
+          test( "should return filtered files list", () => {
+            assert.deepEqual( element._filterInvalidFileTypes( [ "test1.jpg", "test2.gif", "test3.txt", "test4.png", "test5.webm" ] ), [
+              "test1.jpg", "test2.gif", "test4.png"
+            ] )
+          } );
+
+          test( "should return empty list", () => {
+            assert.deepEqual( element._filterInvalidFileTypes( [ "test1.webm", "test2.text", "test3.mov" ] ), [] );
+          } );
+        } );
+
+        suite( "_reset", () => {
+          let startStub;
+
+          setup( () => {
+            startStub = sinon.stub( element, "_start" );
+          } );
+
+          teardown( () => {
+            startStub.restore();
+          } );
+
+          test( "should call _start() if not initial start", () => {
+            element._initialStart = false;
+            element._watchInitiated = true;
+            element._filesList = [ SAMPLE_PATH ];
+            element._reset();
+
+            assert.isFalse( element._watchInitiated );
+            assert.isEmpty( element._filesList );
+            assert.isTrue( startStub.calledOnce );
+          } );
+
+        } );
+
+        suite( "_renderImage", () => {
+          setup( () => {
+            sinon.spy( element.$.image, "updateStyles" );
+            sinon.stub(element, "_getDataUrlFromSVGLocalUrl").callsFake(() => {
+              return Promise.resolve("dataurl");
+            });
+          } );
+
+          teardown( () => {
+            element.$.image.updateStyles.restore();
+            element._getDataUrlFromSVGLocalUrl.restore();
+          } );
+
+          test( "should ignore width/height/sizing and apply responsive styling", () => {
+            element.responsive = true;
+
+            element._renderImage( SAMPLE_PATH, SAMPLE_URL );
+
+            assert.isTrue(element.$.image.updateStyles.called);
+            assert.isNull(element.$.image.width);
+            assert.isNull(element.$.image.height);
+            assert.isNull(element.$.image.sizing);
+          } );
+
+          test( "should apply fixed width/height/sizing", () => {
+            element._renderImage( SAMPLE_PATH, SAMPLE_URL );
+
+            assert.isFalse(element.$.image.updateStyles.called);
+            assert.equal(element.$.image.width, 300);
+            assert.equal(element.$.image.height, 240);
+            assert.equal(element.$.image.sizing, "contain");
+
+          } );
+
+          test( "should attempt to get data url when format is SVG", () => {
+            element._renderImage( "risemedialibrary-abc123/test.svg", "https://storage.googleapis.com/risemedialibrary-abc123/test.svg" );
+
+            assert.isTrue( element._getDataUrlFromSVGLocalUrl.called );
+          } );
+        } );
       });
 
     </script>
