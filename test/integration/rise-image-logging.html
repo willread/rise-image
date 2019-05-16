@@ -24,8 +24,12 @@
 <body>
 <test-fixture id="test-block">
     <template>
-        <rise-image id="test" sizing="contain"
-          file="risemedialibrary-30007b45-3df0-4c7b-9f7f-7d8ce6443013/logo.png">
+        <rise-image
+          id="test"
+          width="300"
+          height="240"
+          sizing="contain"
+          files="risemedialibrary-30007b45-3df0-4c7b-9f7f-7d8ce6443013/logo.png">
         </rise-image>
     </template>
 </test-fixture>
@@ -42,17 +46,14 @@
         file_form: "png",
         file_path: SAMPLE_PATH,
         local_url: ""
-      },
-      watchTimeoutDuration = 1000;
+      };
 
     let element;
 
     setup(() => {
       RisePlayerConfiguration.LocalStorage = {
         watchSingleFile: ( file, handler ) => {
-          setTimeout(
-            () => handler({ status: "CURRENT", fileUrl: SAMPLE_URL }), watchTimeoutDuration
-          );
+            handler({ status: "CURRENT", filePath: SAMPLE_PATH, fileUrl: SAMPLE_URL });
         }
       };
 
@@ -66,8 +67,7 @@
     });
 
     teardown(() => {
-      RisePlayerConfiguration.LocalStorage = {};
-      RisePlayerConfiguration.Logger = {};
+        RisePlayerConfiguration.Logger = {};
     });
 
     test( "should log 'start' event with correct params", () => {
@@ -75,111 +75,82 @@
 
       assert.deepEqual( RisePlayerConfiguration.Logger.info.args[ 0 ][ 0 ], componentData );
       assert.equal( RisePlayerConfiguration.Logger.info.args[ 0 ][ 1 ], "start");
-      assert.isNull( RisePlayerConfiguration.Logger.info.args[ 0 ][ 2 ] );
-      assert.deepEqual( RisePlayerConfiguration.Logger.info.args[ 0 ][ 3 ], {
-        storage: storageData
-      } );
+      assert.deepEqual( RisePlayerConfiguration.Logger.info.args[ 0 ][ 2 ], { files: SAMPLE_PATH } );
     });
 
-    test( "should log 'image-status-updated' event with correct params", done => {
+    test( "should log 'image-status-updated' event with correct params", () => {
       const storage = Object.assign({}, storageData);
       storage.local_url = SAMPLE_URL;
 
       element.dispatchEvent( new CustomEvent( "start" ));
 
-      setTimeout(() => {
-        assert.deepEqual( RisePlayerConfiguration.Logger.info.args[ 1 ][ 0 ], componentData );
-        assert.equal( RisePlayerConfiguration.Logger.info.args[ 1 ][ 1 ], "image-status-updated");
-        assert.deepEqual( RisePlayerConfiguration.Logger.info.args[ 1 ][ 2 ], { status: "CURRENT" });
-        assert.deepEqual( RisePlayerConfiguration.Logger.info.args[ 1 ][ 3 ], {
+      assert.deepEqual( RisePlayerConfiguration.Logger.info.args[ 1 ][ 0 ], componentData );
+      assert.equal( RisePlayerConfiguration.Logger.info.args[ 1 ][ 1 ], "image-status-updated");
+      assert.deepEqual( RisePlayerConfiguration.Logger.info.args[ 1 ][ 2 ], { status: "CURRENT" });
+      assert.deepEqual( RisePlayerConfiguration.Logger.info.args[ 1 ][ 3 ], {
           storage: storage
-        } );
-
-        done();
-      }, watchTimeoutDuration );
+      } );
     });
 
-    test( "should log an 'image-error' event when FILE-ERROR is received", done => {
+    test( "should log an 'image-error' event when FILE-ERROR is received", () => {
       RisePlayerConfiguration.LocalStorage.watchSingleFile = ( file, handler ) => {
-        setTimeout(
-          () => handler({
-            fileUrl: null,
-            status: "FILE-ERROR",
-            errorMessage: "image download error",
-            errorDetail: "network failure"
-          }), watchTimeoutDuration
-        );
+          handler({
+              filePath: SAMPLE_PATH,
+              fileUrl: null,
+              status: "FILE-ERROR",
+              errorMessage: "image download error",
+              errorDetail: "network failure"
+          });
       };
 
-      element.dispatchEvent( new CustomEvent( "start" ));
+        element.dispatchEvent( new CustomEvent( "start" ) );
 
-      setTimeout( () => {
         assert.equal( RisePlayerConfiguration.Logger.info.callCount, 1 ); // start
 
         assert.deepEqual( RisePlayerConfiguration.Logger.error.args[ 0 ][ 0 ], componentData );
         assert.equal( RisePlayerConfiguration.Logger.error.args[ 0 ][ 1 ], "image-error");
         assert.deepEqual( RisePlayerConfiguration.Logger.error.args[ 0 ][ 2 ], {
-          errorMessage: "image download error",
-          errorDetail: "network failure"
+            errorMessage: "image download error",
+            errorDetail: "network failure"
         });
-        assert.deepEqual( RisePlayerConfiguration.Logger.info.args[ 0 ][ 3 ], {
-          storage: storageData
+        assert.deepEqual( RisePlayerConfiguration.Logger.error.args[ 0 ][ 3 ], {
+            storage: storageData
         } );
-
-        done();
-      }, watchTimeoutDuration );
     });
 
-    test( "should log an 'image-error' event when file type is invalid", (done) => {
-        element.file = "risemedialibrary-30007b45-3df0-4c7b-9f7f-7d8ce6443013/test.txt";
+    test( "should log an 'image-error' event when file type is invalid", () => {
+        element.files = "risemedialibrary-30007b45-3df0-4c7b-9f7f-7d8ce6443013/test.txt";
 
-        setTimeout(()=>{
-            element.dispatchEvent( new CustomEvent( "start" ));
-
-            assert.equal( RisePlayerConfiguration.Logger.info.callCount, 1 ); // start
-
-            assert.deepEqual( RisePlayerConfiguration.Logger.error.args[ 0 ][ 0 ], componentData );
-            assert.equal( RisePlayerConfiguration.Logger.error.args[ 0 ][ 1 ], "image-error");
-            assert.deepEqual( RisePlayerConfiguration.Logger.error.args[ 0 ][ 2 ], {
-                errorMessage: "Invalid file format"
-            });
-            assert.deepEqual( RisePlayerConfiguration.Logger.info.args[ 0 ][ 3 ], {
-                storage: {
-                    configuration: "storage file",
-                    file_form: "txt",
-                    file_path: "risemedialibrary-30007b45-3df0-4c7b-9f7f-7d8ce6443013/test.txt",
-                    local_url: ""
-                }
-            } );
-
-            done();
-        },200);
-
-
-    } );
-
-    test( "should log 'reset' info event", (done) => {
         element.dispatchEvent( new CustomEvent( "start" ));
 
-        setTimeout(() => {
-            sinon.stub( element, "_start" );
-            element.file = "risemedialibrary-30007b45-3df0-4c7b-9f7f-7d8ce6443013/logo2.png";
+        assert.equal( RisePlayerConfiguration.Logger.info.callCount, 1 ); // start
 
-            assert.deepEqual( RisePlayerConfiguration.Logger.info.args[ 2 ][ 0 ], componentData );
-            assert.equal( RisePlayerConfiguration.Logger.info.args[ 2 ][ 1 ], "reset");
-            assert.isNull( RisePlayerConfiguration.Logger.info.args[ 2 ][ 2 ] );
-            assert.deepEqual( RisePlayerConfiguration.Logger.info.args[ 2 ][ 3 ], {
-                storage: {
-                    configuration: "storage file",
-                    file_form: "png",
-                    file_path: "risemedialibrary-30007b45-3df0-4c7b-9f7f-7d8ce6443013/logo2.png",
-                    local_url: ""
-                }
-            } );
+        assert.deepEqual( RisePlayerConfiguration.Logger.error.args[ 0 ][ 0 ], componentData );
+        assert.equal( RisePlayerConfiguration.Logger.error.args[ 0 ][ 1 ], "image-error");
+        assert.deepEqual( RisePlayerConfiguration.Logger.error.args[ 0 ][ 2 ], {
+            errorMessage: "Invalid file format"
+        });
+        assert.deepEqual( RisePlayerConfiguration.Logger.error.args[ 0 ][ 3 ], {
+            storage: {
+                configuration: "storage file",
+                file_form: "txt",
+                file_path: "risemedialibrary-30007b45-3df0-4c7b-9f7f-7d8ce6443013/test.txt",
+                local_url: ""
+            }
+        } );
+    } );
 
-            element._start.restore();
-            done();
-        }, watchTimeoutDuration );
+    test( "should log 'reset' info event", () => {
+        element.dispatchEvent( new CustomEvent( "start" ));
+
+        sinon.stub( element, "_start" );
+        element.files = "risemedialibrary-30007b45-3df0-4c7b-9f7f-7d8ce6443013/logo2.png";
+
+        assert.deepEqual( RisePlayerConfiguration.Logger.info.args[ 2 ][ 0 ], componentData );
+        assert.equal( RisePlayerConfiguration.Logger.info.args[ 2 ][ 1 ], "image-reset");
+        assert.deepEqual( RisePlayerConfiguration.Logger.info.args[ 2 ][ 2 ], { files: "risemedialibrary-30007b45-3df0-4c7b-9f7f-7d8ce6443013/logo2.png" } );
+
+        element._start.restore();
     } );
 
     test( "should log 'svg-usage' event with svg details", done => {
@@ -187,13 +158,11 @@
 
         RisePlayerConfiguration.LocalStorage = {
             watchSingleFile: ( file, handler ) => {
-                setTimeout(
-                  () => handler({ status: "CURRENT", fileUrl: `https://storage.googleapis.com/${filePath}` }), watchTimeoutDuration
-                );
+                handler({ status: "CURRENT", filePath, fileUrl: `https://storage.googleapis.com/${filePath}` });
             }
         };
 
-          element.file = "risemedialibrary-7fa5ee92-7deb-450b-a8d5-e5ed648c575f/rise-image-demo/PokemonGO-Team-Logos-Instinct.svg";
+          element.files = filePath;
           element.dispatchEvent( new CustomEvent( "start" ));
 
           setTimeout(() => {
@@ -214,7 +183,7 @@
           }, 3000 );
     });
 
-    test("should log an 'image-error' when rendering an SVG file files", done => {
+    test("should log an 'image-error' when rendering an SVG file files", (done) => {
         sinon.stub(element, "_getDataUrlFromSVGLocalUrl").callsFake(() => {
             return Promise.reject("Request failed: 404: Not found");
         });
@@ -223,16 +192,14 @@
 
         RisePlayerConfiguration.LocalStorage = {
             watchSingleFile: ( file, handler ) => {
-                setTimeout(
-                  () => handler({ status: "CURRENT", fileUrl: `https://storage.googleapis.com/${filePath}` }), watchTimeoutDuration
-                );
+                handler({ status: "CURRENT", filePath, fileUrl: `https://storage.googleapis.com/${filePath}` });
             }
         };
 
-        element.file = "risemedialibrary-7fa5ee92-7deb-450b-a8d5-e5ed648c575f/rise-image-demo/PokemonGO-Team-Logos-Instinct.svg";
+        element.files = "risemedialibrary-7fa5ee92-7deb-450b-a8d5-e5ed648c575f/rise-image-demo/PokemonGO-Team-Logos-Instinct.svg";
         element.dispatchEvent( new CustomEvent( "start" ));
 
-        setTimeout(() => {
+        setTimeout( () => {
             assert.deepEqual( RisePlayerConfiguration.Logger.error.args[ 0 ][ 0 ], componentData );
             assert.equal( RisePlayerConfiguration.Logger.error.args[ 0 ][ 1 ], "image-error");
             assert.equal( RisePlayerConfiguration.Logger.error.args[ 0 ][ 2 ], "Request failed: 404: Not found");
@@ -246,9 +213,9 @@
             } );
 
             element._getDataUrlFromSVGLocalUrl.restore();
-            done();
-        }, watchTimeoutDuration );
 
+            done();
+        }, 1000 );
     })
 
   });
