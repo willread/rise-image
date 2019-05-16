@@ -269,20 +269,20 @@ class RiseImage extends PolymerElement {
     }
   }
 
-  _clearImage() {
+  _clearDisplayedImage() {
     this.$.image.src = "";
   }
 
   _start() {
     if ( !this._isValidFiles( this.files )) {
-      this._clearImage();
+      this._clearDisplayedImage();
       return;
     }
 
     this._filesList = this._filterInvalidFileTypes( this.files.split( "|" ));
 
     if ( !this._filesList || !this._filesList.length || this._filesList.length === 0 ) {
-      this._clearImage();
+      this._clearDisplayedImage();
       return;
     }
 

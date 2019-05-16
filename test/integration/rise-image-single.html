@@ -71,7 +71,7 @@
       });
 
       test('it should clear image when file attribute is empty', () => {
-        let spy = sinon.spy( element, "_clearImage" );
+        let spy = sinon.spy( element, "_clearDisplayedImage" );
 
         element.files = "";
 
@@ -83,7 +83,7 @@
       });
 
       test('it should clear image when file type is invalid', () => {
-        let spy = sinon.spy( element, "_clearImage" );
+        let spy = sinon.spy( element, "_clearDisplayedImage" );
 
         element.files = "risemedialibrary-30007b45-3df0-4c7b-9f7f-7d8ce6443013/test.txt";
 
