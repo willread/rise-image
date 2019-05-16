@@ -43,6 +43,13 @@
         position: relative;
         background-color: darkgrey;
       }
+
+      #image03Wrapper {
+        width: 450px;
+        height: 450px;
+        position: relative;
+        background-color: aqua;
+      }
     </style>
   </head>
   <body>
@@ -51,7 +58,7 @@
       id="rise-image-01"
       label="My Image"
       responsive
-      file="risemedialibrary-7fa5ee92-7deb-450b-a8d5-e5ed648c575f/rise-image-demo/Costa Rican Frog.jpg">
+      files="risemedialibrary-7fa5ee92-7deb-450b-a8d5-e5ed648c575f/rise-image-demo/Costa Rican Frog.jpg">
     </rise-image>
   </div>
 
@@ -62,20 +69,34 @@
       label="SVG Image"
       width="200"
       height="200"
-      file="risemedialibrary-7fa5ee92-7deb-450b-a8d5-e5ed648c575f/rise-image-demo/PokemonGO-Team-Logos-Instinct.svg">
+      files="risemedialibrary-7fa5ee92-7deb-450b-a8d5-e5ed648c575f/rise-image-demo/PokemonGO-Team-Logos-Instinct.svg">
+    </rise-image>
+  </div>
+
+  <div id="image03Wrapper">
+    <rise-image
+      id="rise-image-03"
+      label="My Image"
+      responsive
+      files="risemedialibrary-7fa5ee92-7deb-450b-a8d5-e5ed648c575f/rise-image-demo/Pensive Parakeet.jpg|risemedialibrary-7fa5ee92-7deb-450b-a8d5-e5ed648c575f/rise-image-demo/Boston City Flow.jpg">
     </rise-image>
   </div>
 
   <script>
     function configureComponents() {
       const image01 = document.querySelector('#rise-image-01'),
-        image02 = document.querySelector('#rise-image-02');
+        image02 = document.querySelector('#rise-image-02'),
+        image03 = document.querySelector('#rise-image-03');
 
       image01.addEventListener( "image-error", ( evt ) => {
         console.log( "image 1 error", evt.detail );
       } );
 
       image02.addEventListener( "image-error", ( evt ) => {
+        console.log( "image 2 error", evt.detail );
+      } );
+
+      image03.addEventListener( "image-error", ( evt ) => {
         console.log( "image 2 error", evt.detail );
       } );
 
