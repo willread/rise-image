@@ -68,6 +68,31 @@ jobs:
           paths:
             - version-string
 
+  build-e2e-page:
+    parameters:
+      stage:
+        type: string
+    docker: *BUILDIMAGE
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - restore_cache:
+          key: node-cache-{{ checksum "package.json" }}
+      - run: echo build e2e page << parameters.stage >>
+      - run: |
+          VERSION=$(cat version-string/version)
+          sed "
+            s/__STAGE__/<< parameters.stage >>/;
+            s/__VERSION__/$VERSION/;
+          " e2e/rise-image.html > e2e/rise-image-electron.html
+      - run: cp e2e/polymer-e2e-electron.json polymer.json
+      - run: polymer build
+      - persist_to_workspace:
+          root: ./build
+          paths:
+            - base
+
   deploy-stage:
     docker: *GCSIMAGE
     steps:
@@ -111,6 +136,7 @@ workflows:
             branches:
               only:
                 - /^(stage|staging)[/].*/
+                - /^e2e[/].*/
                 - master
                 - build/stable
       - generate-version:
@@ -118,6 +144,7 @@ workflows:
             branches:
               only:
                 - /^(stage|staging)[/].*/
+                - /^e2e[/].*/
                 - master
                 - build/stable
       - test:
@@ -131,7 +158,27 @@ workflows:
             branches:
               only:
                 - /^(stage|staging)[/].*/
+                - /^e2e[/].*/
                 - master
+                - build/stable
+      - build-e2e-page:
+          stage: beta
+          name: build-e2e-page-beta
+          requires:
+            - build
+          filters:
+            branches:
+              only:
+                - /^e2e[/].*/
+                - master
+      - build-e2e-page:
+          stage: stable
+          name: build-e2e-page-stable
+          requires:
+            - build
+          filters:
+            branches:
+              only:
                 - build/stable
       - deploy-stage:
           requires:
@@ -141,6 +188,7 @@ workflows:
             branches:
               only:
                 - /^(stage|staging)[/].*/
+                - /^e2e[/].*/
                 - master
                 - build/stable
       - deploy-production:
