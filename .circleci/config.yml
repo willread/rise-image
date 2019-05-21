@@ -109,6 +109,26 @@ jobs:
           echo Deploying version $VERSION to $COMPONENT_NAME
           node_modules/common-component/deploy-gcs.sh $COMPONENT_NAME $TARGET
 
+  deploy-e2e-page:
+    parameters:
+      stage:
+        type: string
+    docker: *GCSIMAGE
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - restore_cache:
+          key: node-cache-{{ checksum "package.json" }}
+      - run: mkdir -p ~/.config
+      - run: cp -r gcloud ~/.config
+      - run: |
+          TARGET=$WIDGETS_BASE/<< parameters.stage >>/e2e/$COMPONENT_NAME/electron
+          echo Deploying << parameters.stage >> electron e2e page for $COMPONENT_NAME
+          gsutil rsync -d -r base $TARGET
+          gsutil -m setmeta -r -h "Cache-Control:private, max-age=0" $TARGET
+          gsutil acl -r ch -u AllUsers:R $TARGET
+
   deploy-production:
     parameters:
       stage:
@@ -190,6 +210,27 @@ workflows:
                 - /^(stage|staging)[/].*/
                 - /^e2e[/].*/
                 - master
+                - build/stable
+      - deploy-e2e-page:
+          stage: beta
+          name: deploy-e2e-page-beta
+          requires:
+            - gcloud-setup
+            - build-e2e-page-beta
+          filters:
+            branches:
+              only:
+                - master
+                - /^e2e[/].*/
+      - deploy-e2e-page:
+          stage: stable
+          name: deploy-e2e-page-stable
+          requires:
+            - gcloud-setup
+            - build-e2e-page-stable
+          filters:
+            branches:
+              only:
                 - build/stable
       - deploy-production:
           stage: beta
