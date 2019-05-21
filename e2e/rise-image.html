@@ -79,6 +79,9 @@
         image02.addEventListener( "image-error", ( evt ) => {
           console.log( "image 2 error", evt.detail );
         } );
+
+        RisePlayerConfiguration.Helpers.sendStartEvent( image01 );
+        RisePlayerConfiguration.Helpers.sendStartEvent( image02 );
       }
 
       window.addEventListener( "rise-components-ready", configureComponents );
