@@ -1,0 +1,68 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <script src="../../node_modules/@webcomponents/webcomponentsjs/webcomponents-loader.js"></script>
+  <script src="../../node_modules/@polymer/test-fixture/test-fixture.js"></script>
+  <script src="../../node_modules/mocha/mocha.js"></script>
+  <script src="../../node_modules/chai/chai.js"></script>
+  <script src="../../node_modules/sinon/pkg/sinon.js"></script>
+  <script src="../../node_modules/wct-mocha/wct-mocha.js"></script>
+  <script>
+    const SAMPLE_PATH = 'risemedialibrary-30007b45-3df0-4c7b-9f7f-7d8ce6443013/logo.png';
+    const SAMPLE_URL = `https://storage.googleapis.com/${ SAMPLE_PATH }`;
+
+    RisePlayerConfiguration = {
+      isPreview: () => false
+    };
+  </script>
+  <script src="../../src/rise-image.js" type="module"></script>
+</head>
+<body>
+<test-fixture id="test-block">
+  <template>
+    <rise-image
+      duration="5"
+      responsive
+      files="risemedialibrary-7fa5ee92-7deb-450b-a8d5-e5ed648c575f/rise-image-demo/canadiens_logo.gif|risemedialibrary-7fa5ee92-7deb-450b-a8d5-e5ed648c575f/rise-image-demo/blue-jays-logo.jpg|risemedialibrary-7fa5ee92-7deb-450b-a8d5-e5ed648c575f/rise-image-demo/raptors_logo.png">
+    </rise-image>
+  </template>
+</test-fixture>
+
+<script>
+  suite( "rise-image multiple files", () => {
+    let element;
+
+    setup(() => {
+      RisePlayerConfiguration.Logger = {
+        info: () => {},
+        warning: () => {},
+        error: () => {}
+      };
+
+      element = fixture("test-block");
+    });
+
+    teardown(() => {
+      RisePlayerConfiguration.Logger = {};
+    });
+
+    suite('transition images', () => {
+      setup(() => {
+
+      });
+
+      teardown(() => {
+
+      });
+
+    });
+
+  });
+
+</script>
+</body>
+</html>
