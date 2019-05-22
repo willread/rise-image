@@ -315,7 +315,7 @@ class RiseImage extends PolymerElement {
     this.duration = parseInt( this.duration, 10 );
 
     if ( !isNaN( this.duration ) && this.duration !== 0 ) {
-      this._transitionTimer = timeOut.run( this._onShowImageComplete, this.duration );
+      this._transitionTimer = timeOut.run( this._onShowImageComplete.bind( this ), this.duration * 1000 );
     }
   }
 
