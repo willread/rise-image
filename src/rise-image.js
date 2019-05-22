@@ -2,6 +2,7 @@
 
 import { PolymerElement } from "@polymer/polymer/polymer-element.js";
 import { html } from "@polymer/polymer/lib/utils/html-tag.js";
+import { timeOut } from "@polymer/polymer/lib/utils/async.js";
 import { version } from "./rise-image-version.js";
 import "@polymer/iron-image/iron-image.js";
 
@@ -40,6 +41,10 @@ class RiseImage extends PolymerElement {
       responsive: {
         type: Boolean,
         value: false
+      },
+      duration: {
+        type: Number,
+        value: 10
       }
     };
   }
@@ -48,7 +53,7 @@ class RiseImage extends PolymerElement {
   // a comma-separated list of one or more dependencies.
   static get observers() {
     return [
-      "_reset(files)"
+      "_reset(files, duration)"
     ]
   }
 
@@ -98,7 +103,11 @@ class RiseImage extends PolymerElement {
     this._watchInitiated = false;
     this._initialStart = true;
     this._filesList = [];
-    this._temporaryFlag = false;
+    this._managedFiles = [];
+    this._managedFilesInError = [];
+    this._filesToRenderList = [];
+    this._transitionIndex = 0;
+    this._transitionTimer = null;
   }
 
   ready() {
@@ -146,11 +155,30 @@ class RiseImage extends PolymerElement {
     return filePath.substr( filePath.lastIndexOf( "." ) + 1 ).toLowerCase();
   }
 
+  _getManagedFileInError( filePath ) {
+    return this._managedFilesInError.find( file => file.filePath === filePath );
+  }
+
+  _getManagedFile( filePath ) {
+    return this._managedFiles.find( file => file.filePath === filePath );
+  }
+
+  _getFileToRender( filePath ) {
+    return this._filesToRenderList.find( file => file.filePath === filePath );
+  }
+
   _reset() {
     if ( !this._initialStart ) {
 
+      timeOut.cancel( this._transitionTimer );
+      this._clearDisplayedImage();
+
       this._watchInitiated = false;
       this._filesList = [];
+      this._managedFiles = [];
+      this._managedFilesInError = [];
+      this._filesToRenderList = [];
+      this._transitionIndex = null;
 
       this._log( RiseImage.LOG_TYPE_INFO, RiseImage.EVENT_IMAGE_RESET, { files: this.files });
       this._start();
@@ -246,7 +274,7 @@ class RiseImage extends PolymerElement {
     return filteredFiles;
   }
 
-  _renderImage( file, url ) {
+  _renderImage( filePath, fileUrl ) {
     if ( this.responsive ) {
       this.$.image.updateStyles({ "--iron-image-width": "100%" });
     } else {
@@ -255,17 +283,17 @@ class RiseImage extends PolymerElement {
       this.$.image.sizing = this.sizing;
     }
 
-    if ( this._getStorageFileFormat( file ) === "svg" ) {
-      this._getDataUrlFromSVGLocalUrl( file, url )
+    if ( this._getStorageFileFormat( filePath ) === "svg" ) {
+      this._getDataUrlFromSVGLocalUrl( filePath, fileUrl )
         .then( dataUrl => {
           this.$.image.src = dataUrl;
         })
         .catch( error => {
-          this._log( RiseImage.LOG_TYPE_ERROR, RiseImage.EVENT_IMAGE_ERROR, error, { storage: this._getStorageData( file, url ) });
-          this._sendImageEvent( RiseImage.EVENT_IMAGE_ERROR, { file: file, errorMessage: error });
+          this._log( RiseImage.LOG_TYPE_ERROR, RiseImage.EVENT_IMAGE_ERROR, error, { storage: this._getStorageData( filePath, fileUrl ) });
+          this._sendImageEvent( RiseImage.EVENT_IMAGE_ERROR, { filePath, errorMessage: error });
         });
     } else {
-      this.$.image.src = url;
+      this.$.image.src = fileUrl;
     }
   }
 
@@ -273,16 +301,98 @@ class RiseImage extends PolymerElement {
     this.$.image.src = "";
   }
 
+  _onShowImageComplete() {
+    if ( this._transitionIndex < ( this._filesToRenderList.length - 1 )) {
+      this._transitionIndex += 1;
+      this._renderImage( this._filesToRenderList[ this._transitionIndex ].filePath, this._filesToRenderList[ this._transitionIndex ].fileUrl );
+      this._startTransitionTimer();
+    } else {
+      this._configureShowingImages();
+    }
+  }
+
+  _startTransitionTimer() {
+    this.duration = parseInt( this.duration, 10 );
+
+    if ( !isNaN( this.duration ) && this.duration !== 0 ) {
+      this._transitionTimer = timeOut.run( this._onShowImageComplete, this.duration );
+    }
+  }
+
+  _configureShowingImages() {
+    this._filesToRenderList = this._managedFiles.slice( 0 );
+    this._transitionIndex = 0;
+
+    if ( this._filesToRenderList.length > 0 ) {
+      this._renderImage( this._filesToRenderList[ 0 ].filePath, this._filesToRenderList[ 0 ].fileUrl );
+
+      if ( this._filesToRenderList.length > 1 ) {
+        this._startTransitionTimer();
+      }
+    } else {
+      this._clearDisplayedImage();
+    }
+  }
+
+  _manageFileInError( details, fixed ) {
+    const { filePath, params } = details;
+
+    if ( !filePath ) {
+      return;
+    }
+
+    let fileInError = this._getManagedFileInError( filePath );
+
+    if ( fixed && fileInError ) {
+      // remove this file from files in error list
+      this._managedFilesInError.splice( this._managedFilesInError.findIndex( file => file.filePath === filePath ), 1 );
+    } else if ( !fixed ) {
+      if ( !fileInError ) {
+        fileInError = { filePath, params };
+        // add this file to list of files in error
+        this._managedFilesInError.push( fileInError );
+      } else {
+        fileInError.params = params;
+      }
+    }
+  }
+
+  _manageFile( message ) {
+    const { filePath, status, fileUrl } = message;
+
+    let managedFile = this._getManagedFile( filePath );
+
+    if ( status.toUpperCase() === "CURRENT" ) {
+      if ( !managedFile ) {
+        // get the order that this file should be in from _filesList
+        const order = this._filesList.findIndex( file => file.filePath === filePath );
+
+        managedFile = { filePath, fileUrl, order };
+
+        // add this file to list
+        this._managedFiles.push( managedFile );
+      } else {
+        // file has been updated
+        managedFile.fileUrl = fileUrl;
+      }
+    }
+
+    if ( status.toUpperCase() === "DELETED" && managedFile ) {
+      this._managedFiles.splice( this._managedFiles.findIndex( file => file.filePath === filePath ), 1 );
+    }
+
+    // sort the managed files based on order value
+    this._managedFiles.sort(( a, b ) => a.order - b.order );
+  }
+
   _start() {
     if ( !this._isValidFiles( this.files )) {
-      this._clearDisplayedImage();
       return;
     }
 
     this._filesList = this._filterInvalidFileTypes( this.files.split( "|" ));
 
     if ( !this._filesList || !this._filesList.length || this._filesList.length === 0 ) {
-      this._clearDisplayedImage();
       return;
     }
 
@@ -336,14 +446,47 @@ class RiseImage extends PolymerElement {
   }
 
   _handleSingleFileError( message ) {
-    const details = { file: message.filePath, errorMessage: message.errorMessage, errorDetail: message.errorDetail };
+    const { filePath, fileUrl } = message,
+      details = { filePath, errorMessage: message.errorMessage, errorDetail: message.errorDetail },
+      fileInError = this._getManagedFileInError( filePath );
+
+    // prevent repetitive logging when component instance is receiving messages from other potential component instances watching same file
+    if ( fileInError && ( JSON.stringify( details ) === JSON.stringify( fileInError.details ))) {
+      return;
+    }
+
+    this._manageFileInError( details, false );
+
+    /*** Possible error messages from Local Storage ***/
+    /*
+      "File's host server could not be reached"
+
+      "File I/O Error"
+
+      "Could not retrieve signed URL"
+
+      "Insufficient disk space"
+
+      "Invalid response with status code [CODE]"
+     */
 
     this._log( RiseImage.LOG_TYPE_ERROR, RiseImage.EVENT_IMAGE_ERROR, {
       errorMessage: message.errorMessage,
       errorDetail: message.errorDetail
-    }, { storage: this._getStorageData( message.filePath, message.fileUrl ) });
+    }, { storage: this._getStorageData( filePath, fileUrl ) });
 
     this._sendImageEvent( RiseImage.EVENT_IMAGE_ERROR, details );
+
+
+    if ( this._getManagedFile( filePath )) {
+      // remove this file from the file list since there was a problem with its new version being provided
+      this._manageFile({ filePath, status: "deleted" });
+
+      if ( this._filesToRenderList.length === 1 && this._getFileToRender( message.filePath )) {
+        this._filesToRenderList = [];
+        this._clearDisplayedImage();
+      }
+    }
   }
 
   _handleSingleFileUpdate( message ) {
@@ -360,19 +503,22 @@ class RiseImage extends PolymerElement {
   }
 
   _handleImageStatusUpdated( message ) {
-    this._log( RiseImage.LOG_TYPE_INFO, RiseImage.EVENT_IMAGE_STATUS_UPDATED, { status: message.status }, { storage: this._getStorageData( message.filePath, message.fileUrl ) });
+    const { filePath, status, fileUrl } = message;
 
-    if ( message.status === "CURRENT" ) {
-      // TODO: temporarily rendering only first image ready
-      console.log( message );
-      if ( !this._temporaryFlag ) {
-        this._temporaryFlag = true;
-        this._renderImage( message.filePath, message.fileUrl );
-      }
+    this._log( RiseImage.LOG_TYPE_INFO, RiseImage.EVENT_IMAGE_STATUS_UPDATED, { status }, { storage: this._getStorageData( filePath, fileUrl ) });
+
+    this._manageFile( message );
+    this._manageFileInError( message, true );
+
+    if ( this._filesToRenderList.length === 1 && status === "DELETED" && this._filesToRenderList.find( file => file.filePath === filePath )) {
+      this._filesToRenderList = [];
+      this._clearDisplayedImage();
+
+      return;
     }
 
-    if ( message.status === "DELETED" ) {
-      // TODO: handle this when managing transitioning multiple files
+    if ( this._filesToRenderList.length < 2 && status === "CURRENT" ) {
+      this._configureShowingImages();
     }
   }
 
