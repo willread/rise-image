@@ -178,7 +178,8 @@ class RiseImage extends PolymerElement {
       this._managedFiles = [];
       this._managedFilesInError = [];
       this._filesToRenderList = [];
-      this._transitionIndex = null;
+      this._transitionTimer = null;
+      this._transitionIndex = 0;
 
       this._log( RiseImage.LOG_TYPE_INFO, RiseImage.EVENT_IMAGE_RESET, { files: this.files });
       this._start();
