@@ -12,8 +12,20 @@
   <script src="../../node_modules/sinon/pkg/sinon.js"></script>
   <script src="../../node_modules/wct-mocha/wct-mocha.js"></script>
   <script>
-    const SAMPLE_PATH = 'risemedialibrary-30007b45-3df0-4c7b-9f7f-7d8ce6443013/logo.png';
-    const SAMPLE_URL = `https://storage.googleapis.com/${ SAMPLE_PATH }`;
+    const testFiles = [
+      {
+        path: "risemedialibrary-7fa5ee92-7deb-450b-a8d5-e5ed648c575f/rise-image-demo/canadiens_logo.gif",
+        url: "https://storage.googleapis.com/risemedialibrary-7fa5ee92-7deb-450b-a8d5-e5ed648c575f/rise-image-demo/canadiens_logo.gif"
+      },
+      {
+        path: "risemedialibrary-7fa5ee92-7deb-450b-a8d5-e5ed648c575f/rise-image-demo/blue-jays-logo.jpg",
+        url: "https://storage.googleapis.com/risemedialibrary-7fa5ee92-7deb-450b-a8d5-e5ed648c575f/rise-image-demo/blue-jays-logo.jpg"
+      },
+      {
+        path: "risemedialibrary-7fa5ee92-7deb-450b-a8d5-e5ed648c575f/rise-image-demo/raptors_logo.png",
+        url: "https://storage.googleapis.com/risemedialibrary-7fa5ee92-7deb-450b-a8d5-e5ed648c575f/rise-image-demo/raptors_logo.png"
+      }
+    ];
 
     RisePlayerConfiguration = {
       isPreview: () => false
@@ -34,7 +46,8 @@
 
 <script>
   suite( "rise-image multiple files", () => {
-    let element;
+    let element,
+      clock;
 
     setup(() => {
       RisePlayerConfiguration.Logger = {
@@ -43,22 +56,271 @@
         error: () => {}
       };
 
+      clock = sinon.useFakeTimers();
+
       element = fixture("test-block");
     });
 
     teardown(() => {
+      clock.restore();
       RisePlayerConfiguration.Logger = {};
     });
 
     suite('transition images', () => {
       setup(() => {
-
+        RisePlayerConfiguration.LocalStorage = {
+          watchSingleFile: (filePath, handler) => {
+            const file = testFiles.find( file => file.path === filePath );
+            handler({ status: "CURRENT", filePath: file.path, fileUrl: file.url });
+          }
+        };
       });
 
       teardown(() => {
+        RisePlayerConfiguration.LocalStorage = {};
+      });
+
+      test('it should render first image when an image is available', () => {
+        element.dispatchEvent( new CustomEvent( "start" ) );
+
+        assert.equal(element.$.image.src, testFiles[ 0 ].url);
+      });
+
+      test('it should start transition timer when two images available and show each for 5 seconds', () => {
+        element.dispatchEvent( new CustomEvent( "start" ) );
+
+        assert.equal(element.$.image.src, testFiles[ 0 ].url);
+
+        clock.tick( 5000 );
+
+        assert.equal(element.$.image.src, testFiles[ 1 ].url);
+
+        clock.tick( 5000 );
+
+        assert.equal(element.$.image.src, testFiles[ 0 ].url);
+      });
+
+      test('it should transition all three images when all are available', () => {
+        element.dispatchEvent( new CustomEvent( "start" ) );
+
+        // emulate first two images cycle and first two images shown again in the following cycle
+        clock.tick( 20000 );
+
+        assert.equal(element.$.image.src, testFiles[ 2 ].url);
+
+        clock.tick( 5000 );
+
+        assert.equal(element.$.image.src, testFiles[ 0 ].url);
+      });
+
+    });
+
+    suite('error', () => {
+      setup(() => {
+        RisePlayerConfiguration.LocalStorage = {
+          watchSingleFile: (filePath, handler) => {
+            if ( filePath === testFiles[ 1 ].path ) {
+              handler({
+                filePath: testFiles[ 1 ].path,
+                fileUrl: null,
+                status: "FILE-ERROR",
+                errorMessage: "image download error",
+                errorDetail: "network failure"
+              });
+            } else {
+              const file = testFiles.find( file => file.path === filePath );
+              handler({ status: "CURRENT", filePath: file.path, fileUrl: file.url });
+            }
+          }
+        };
+      });
+
+      test('it should only cycle first and third test images', () => {
+        element.dispatchEvent( new CustomEvent( "start" ) );
+
+        assert.equal(element.$.image.src, testFiles[ 0 ].url);
+
+        clock.tick( 5000 );
+
+        assert.equal(element.$.image.src, testFiles[ 2 ].url);
+
+        clock.tick( 15000 );
+
+        assert.equal(element.$.image.src, testFiles[ 0 ].url);
+      });
+
+    });
+
+    suite('error when user updated file in Storage', () => {
+      setup(() => {
+        RisePlayerConfiguration.LocalStorage = {
+          watchSingleFile: (filePath, handler) => {
+            const file = testFiles.find( file => file.path === filePath );
+            handler({ status: "CURRENT", filePath: file.path, fileUrl: file.url });
+          }
+        };
+      });
+
+      test('it should transition all three images when all are available and then remove first file when error is received from RLS', () => {
+        element.dispatchEvent( new CustomEvent( "start" ) );
+
+        // emulate first two images cycle and first two images shown again in the following cycle
+        clock.tick( 20000 );
+
+        assert.equal(element.$.image.src, testFiles[ 2 ].url);
+
+        clock.tick( 5000 );
+
+        assert.equal(element.$.image.src, testFiles[ 0 ].url);
+
+        element._handleSingleFileUpdate( {
+          filePath: testFiles[ 0 ].path,
+          fileUrl: null,
+          status: "FILE-ERROR",
+          errorMessage: "image download error",
+          errorDetail: "network failure"
+
+        } );
+
+        // emulate cycling 2nd and third images, to be back to start again
+        clock.tick( 15000 );
+
+        // should be 2nd test image now that starts
+        assert.equal(element.$.image.src, testFiles[ 1 ].url);
+
+        clock.tick( 10000 );
+
+        assert.equal(element.$.image.src, testFiles[ 1 ].url);
+      });
+
+      test('it should transition all three images after file error is corrected', () => {
+        element.dispatchEvent( new CustomEvent( "start" ) );
+
+        // emulate first two images cycle and full following cycle
+        clock.tick( 25000 );
+
+        assert.equal(element.$.image.src, testFiles[ 0 ].url);
+
+        element._handleSingleFileUpdate( {
+          filePath: testFiles[ 0 ].path,
+          fileUrl: null,
+          status: "FILE-ERROR",
+          errorMessage: "image download error",
+          errorDetail: "network failure"
+
+        } );
+
+        // emulate cycling 2nd and third images, to be back to start again
+        clock.tick( 15000 );
+
+        // should be 2nd test image now that starts
+        assert.equal(element.$.image.src, testFiles[ 1 ].url);
+
+        // emulate file corrected
+        element._handleSingleFileUpdate( {
+          filePath: testFiles[ 0 ].path,
+          fileUrl: testFiles[ 0 ].url,
+          status: "CURRENT"
+        } );
+
+        clock.tick( 10000 );
+
+        // should be 1st test file that now starts
+        assert.equal(element.$.image.src, testFiles[ 0 ].url);
+
+        clock.tick( 15000 );
+
+        assert.equal(element.$.image.src, testFiles[ 0 ].url);
+      });
+
+      test('it should clear displayed image when error is received for all files from RLS', () => {
+        element.dispatchEvent( new CustomEvent( "start" ) );
+
+        // emulate first two images cycle and first two images shown again in the following cycle
+        clock.tick( 20000 );
+
+        assert.equal(element.$.image.src, testFiles[ 2 ].url);
+
+        clock.tick( 5000 );
+
+        assert.equal(element.$.image.src, testFiles[ 0 ].url);
+
+        element._handleSingleFileUpdate( {
+          filePath: testFiles[ 0 ].path,
+          fileUrl: null,
+          status: "FILE-ERROR",
+          errorMessage: "image download error",
+          errorDetail: "network failure"
+
+        } );
+
+        element._handleSingleFileUpdate( {
+          filePath: testFiles[ 1 ].path,
+          fileUrl: null,
+          status: "FILE-ERROR",
+          errorMessage: "image download error",
+          errorDetail: "network failure"
+
+        } );
+
+        element._handleSingleFileUpdate( {
+          filePath: testFiles[ 2 ].path,
+          fileUrl: null,
+          status: "FILE-ERROR",
+          errorMessage: "image download error",
+          errorDetail: "network failure"
+
+        } );
+
+        // emulate cycling 2nd and third images, to be back to start again
+        clock.tick( 15000 );
+
+        assert.equal(element.$.image.src, "");
 
       });
 
+    });
+
+    suite('user deleted file in Storage', () => {
+      setup(() => {
+        RisePlayerConfiguration.LocalStorage = {
+          watchSingleFile: (filePath, handler) => {
+            const file = testFiles.find( file => file.path === filePath );
+            handler({ status: "CURRENT", filePath: file.path, fileUrl: file.url });
+          }
+        };
+      });
+
+      test('it should transition all three images when all are available and then remove third file when DELETED is received from RLS', () => {
+        element.dispatchEvent( new CustomEvent( "start" ) );
+
+        // emulate first two images cycle and first two images shown again in the following cycle
+        clock.tick( 20000 );
+
+        assert.equal(element.$.image.src, testFiles[ 2 ].url);
+
+        clock.tick( 5000 );
+
+        assert.equal(element.$.image.src, testFiles[ 0 ].url);
+
+        element._handleSingleFileUpdate( {
+          filePath: testFiles[ 2 ].path,
+          status: "DELETED"
+        } );
+
+        // emulate cycling 2nd and third images, to be back to start again
+        clock.tick( 15000 );
+
+        assert.equal(element.$.image.src, testFiles[ 0 ].url);
+
+        clock.tick( 5000 );
+
+        assert.equal(element.$.image.src, testFiles[ 1 ].url);
+
+        clock.tick( 5000 );
+
+        assert.equal(element.$.image.src, testFiles[ 0 ].url);
+      });
     });
 
   });

@@ -366,7 +366,7 @@ class RiseImage extends PolymerElement {
     if ( status.toUpperCase() === "CURRENT" ) {
       if ( !managedFile ) {
         // get the order that this file should be in from _filesList
-        const order = this._filesList.findIndex( file => file.filePath === filePath );
+        const order = this._filesList.findIndex( path => path === filePath );
 
         managedFile = { filePath, fileUrl, order };
 
