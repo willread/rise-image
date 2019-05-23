@@ -51,7 +51,7 @@
       RisePlayerConfiguration.Logger = {};
     });
 
-    suite('render and clear image', () => {
+    suite('render image', () => {
       setup(() => {
         RisePlayerConfiguration.LocalStorage = {
           watchSingleFile: (file, handler) => {
@@ -70,26 +70,28 @@
         assert.equal(element.$.image.src, SAMPLE_URL);
       });
 
-      test('it should clear image when file attribute is empty', () => {
-        let spy = sinon.spy( element, "_clearDisplayedImage" );
+      test('it should not render image when file attribute is empty', () => {
+        let spy = sinon.spy( element, "_renderImage" );
 
         element.files = "";
 
         element.dispatchEvent( new CustomEvent( "start" ) );
 
-        assert(spy.called);
+        assert.isFalse(spy.called);
+        assert.equal(element.$.image.src, "");
 
         spy.restore();
       });
 
-      test('it should clear image when file type is invalid', () => {
-        let spy = sinon.spy( element, "_clearDisplayedImage" );
+      test('it should not render image when file type is invalid', () => {
+        let spy = sinon.spy( element, "_renderImage" );
 
         element.files = "risemedialibrary-30007b45-3df0-4c7b-9f7f-7d8ce6443013/test.txt";
 
         element.dispatchEvent( new CustomEvent( "start" ) );
 
-        assert(spy.called);
+        assert.isFalse(spy.called);
+        assert.equal(element.$.image.src, "");
 
         spy.restore();
       });
@@ -114,7 +116,7 @@
       test('it should send an image error event if an image local storage error was received', (done) => {
         element.addEventListener('image-error', event => {
           assert.deepEqual( event.detail, {
-            file: SAMPLE_PATH,
+            filePath: SAMPLE_PATH,
             errorMessage: "image download error",
             errorDetail: "network failure"
           });
@@ -150,7 +152,7 @@
 
         element.addEventListener('image-error', event => {
           assert.deepEqual( event.detail, {
-            file: svgFilePath,
+            filePath: svgFilePath,
             errorMessage: "Request failed: 404: Not found"
           });
 

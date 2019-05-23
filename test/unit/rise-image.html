@@ -158,25 +158,36 @@
         } );
 
         suite( "_reset", () => {
-          let startStub;
-
           setup( () => {
-            startStub = sinon.stub( element, "_start" );
+            sinon.stub( element, "_start" );
           } );
 
           teardown( () => {
-            startStub.restore();
+            element._start.restore();
           } );
 
-          test( "should call _start() if not initial start", () => {
+          test( "should reset internals, clear displayed image, and call _start() only if not initial start", () => {
+            sinon.spy( element, "_clearDisplayedImage" );
+
             element._initialStart = false;
             element._watchInitiated = true;
             element._filesList = [ SAMPLE_PATH ];
+            element._managedFiles = [ { filePath: SAMPLE_PATH, fileUrl: SAMPLE_URL, order: 0 } ];
+            element._filesToRenderList = [ { filePath: SAMPLE_PATH, fileUrl: SAMPLE_URL, order: 0 } ];
+            element._managedFilesInError= [ { filePath: "test path", fileUrl: "test url", order: 1 } ];
+            element._transitionTimer = 12345;
+            element._transitionIndex = 3;
             element._reset();
 
             assert.isFalse( element._watchInitiated );
             assert.isEmpty( element._filesList );
-            assert.isTrue( startStub.calledOnce );
+            assert.isEmpty( element._managedFiles );
+            assert.isEmpty( element._managedFilesInError );
+            assert.isEmpty( element._filesToRenderList );
+            assert.isNull( element._transitionTimer );
+            assert.equal( element._transitionIndex, 0 );
+            assert.isTrue( element._clearDisplayedImage.called );
+            assert.isTrue( element._start.calledOnce );
           } );
 
         } );
