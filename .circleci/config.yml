@@ -68,6 +68,31 @@ jobs:
           paths:
             - version-string
 
+  build-e2e-page:
+    parameters:
+      stage:
+        type: string
+    docker: *BUILDIMAGE
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - restore_cache:
+          key: node-cache-{{ checksum "package.json" }}
+      - run: echo build e2e page << parameters.stage >>
+      - run: |
+          VERSION=$(cat version-string/version)
+          sed "
+            s/__STAGE__/<< parameters.stage >>/;
+            s/__VERSION__/$VERSION/;
+          " e2e/rise-image.html > e2e/rise-image-electron.html
+      - run: cp e2e/polymer-e2e-electron.json polymer.json
+      - run: polymer build
+      - persist_to_workspace:
+          root: ./build
+          paths:
+            - base
+
   deploy-stage:
     docker: *GCSIMAGE
     steps:
@@ -83,6 +108,69 @@ jobs:
           TARGET=$WIDGETS_BASE/staging/components/$COMPONENT_NAME/$VERSION/
           echo Deploying version $VERSION to $COMPONENT_NAME
           node_modules/common-component/deploy-gcs.sh $COMPONENT_NAME $TARGET
+
+  deploy-e2e-page:
+    parameters:
+      stage:
+        type: string
+    docker: *GCSIMAGE
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - restore_cache:
+          key: node-cache-{{ checksum "package.json" }}
+      - run: mkdir -p ~/.config
+      - run: cp -r gcloud ~/.config
+      - run: |
+          TARGET=$WIDGETS_BASE/<< parameters.stage >>/e2e/$COMPONENT_NAME/electron
+          echo Deploying << parameters.stage >> electron e2e page for $COMPONENT_NAME
+          gsutil rsync -d -r base $TARGET
+          gsutil -m setmeta -r -h "Cache-Control:private, max-age=0" $TARGET
+          gsutil acl -r ch -u AllUsers:R $TARGET
+
+  test-e2e-electron:
+    parameters:
+      displayId:
+        type: string
+      installerPath:
+        type: string
+    docker: &E2EIMAGE
+      - image: jenkinsrise/jenkinsrise-cci-image-launcher-electron-e2e:0.0.2
+        environment:
+          INSTALLER_BASE: https://storage.googleapis.com/install-versions.risevision.com
+          SCREENSHOTS_BASE: https://storage.googleapis.com/risevision-display-screenshots
+          PLAYER_CONFIG: /home/circleci/rvplayer/RiseDisplayNetworkII.ini
+    steps:
+      - run: git clone https://github.com/Rise-Vision/rise-launcher-electron-e2e.git
+      - run:
+          working_directory: rise-launcher-electron-e2e
+          command: npm install
+      - run: mkdir ~/rvplayer
+      - run:
+          name: setup rise player configuration file
+          command: |
+            echo "displayid=<< parameters.displayId >>" > $PLAYER_CONFIG
+            echo proxy= >> $PLAYER_CONFIG
+      - run:
+          name: download expected screenshot
+          working_directory: rise-launcher-electron-e2e
+          command: |
+            EXPECTED_SNAPSHOT_URL=$SCREENSHOTS_BASE/<< parameters.displayId >>.jpg
+            curl $EXPECTED_SNAPSHOT_URL > expected-screenshot.jpg
+      - run:
+          name: download Rise Player Electron
+          working_directory: rise-launcher-electron-e2e
+          command: curl $INSTALLER_BASE<< parameters.installerPath >>installer-lnx-64.sh > installer.sh
+      - run: chmod +x ./rise-launcher-electron-e2e/installer.sh
+      - run:
+          name: run the test
+          working_directory: rise-launcher-electron-e2e
+          command: node test-display-runner-using-downloaded-installer.js << parameters.displayId >> 20
+      - run: mkdir output
+      - run: mv ./rise-launcher-electron-e2e/*screenshot.jpg output
+      - store_artifacts:
+          path: output
 
   deploy-production:
     parameters:
@@ -111,6 +199,7 @@ workflows:
             branches:
               only:
                 - /^(stage|staging)[/].*/
+                - /^e2e[/].*/
                 - master
                 - build/stable
       - generate-version:
@@ -118,6 +207,7 @@ workflows:
             branches:
               only:
                 - /^(stage|staging)[/].*/
+                - /^e2e[/].*/
                 - master
                 - build/stable
       - test:
@@ -131,7 +221,27 @@ workflows:
             branches:
               only:
                 - /^(stage|staging)[/].*/
+                - /^e2e[/].*/
                 - master
+                - build/stable
+      - build-e2e-page:
+          stage: beta
+          name: build-e2e-page-beta
+          requires:
+            - build
+          filters:
+            branches:
+              only:
+                - /^e2e[/].*/
+                - master
+      - build-e2e-page:
+          stage: stable
+          name: build-e2e-page-stable
+          requires:
+            - build
+          filters:
+            branches:
+              only:
                 - build/stable
       - deploy-stage:
           requires:
@@ -141,13 +251,58 @@ workflows:
             branches:
               only:
                 - /^(stage|staging)[/].*/
+                - /^e2e[/].*/
                 - master
+                - build/stable
+      - deploy-e2e-page:
+          stage: beta
+          name: deploy-e2e-page-beta
+          requires:
+            - gcloud-setup
+            - build-e2e-page-beta
+          filters:
+            branches:
+              only:
+                - master
+                - /^e2e[/].*/
+      - deploy-e2e-page:
+          stage: stable
+          name: deploy-e2e-page-stable
+          requires:
+            - gcloud-setup
+            - build-e2e-page-stable
+          filters:
+            branches:
+              only:
+                - build/stable
+      - test-e2e-electron:
+          displayId: NEWSF2QM2B2F
+          installerPath: /beta/
+          name: test-e2e-electron-beta
+          requires:
+            - deploy-stage
+            - deploy-e2e-page-beta
+          filters:
+            branches:
+              only:
+                - master
+                - /^e2e[/].*/
+      - test-e2e-electron:
+          displayId: 3AEP9BWZEKFN
+          installerPath: /
+          name: test-e2e-electron-stable
+          requires:
+            - deploy-stage
+            - deploy-e2e-page-stable
+          filters:
+            branches:
+              only:
                 - build/stable
       - deploy-production:
           stage: beta
           name: deploy-beta
           requires:
-            - deploy-stage
+            - test-e2e-electron-beta
           filters:
             branches:
               only:
@@ -156,7 +311,7 @@ workflows:
           stage: stable
           name: deploy-stable
           requires:
-            - deploy-stage
+            - test-e2e-electron-stable
           filters:
             branches:
               only:
