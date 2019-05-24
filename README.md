@@ -55,10 +55,11 @@ This component receives the following list of attributes:
 - **duration**: ( number ): The duration in seconds that each image shows for when multiple files are configured. Defaults to 10 seconds.
 - **width**: ( number / required ): Sets the width of image(s). Required if not using _responsive_ attribute.
 - **height**: ( number / required ): Sets the height of image(s). Required if not using _responsive_ attribute.
-- **sizing**: ( string ): Determines how to fill the boundaries of the element. Valid values are "contain" and "cover". Defaults to "contain"".
+- **sizing**: ( string ): Determines how to fill the boundaries of the element. Valid values are "contain" and "cover". Defaults to "contain".
   - “contain” : full aspect ratio of the image is contained within the element and letterboxed
   - “cover” : image is cropped in order to fully cover the bounds of the element
 - **responsive**: ( boolean / non-value attribute ): Applies responsive sizing to the image(s) which will respond to instance parent `<div>` container. When _responsive_ is used, the component will ignore any "width", "height", or "sizing" attribute values
+- **non-editable**: ( empty / optional ): If present, it indicates this component is not available for customization in the template editor.
 
 
 
