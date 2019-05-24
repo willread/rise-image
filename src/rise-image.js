@@ -125,8 +125,13 @@ class RiseImage extends PolymerElement {
   }
 
   _configureImageEventListeners() {
-    this.$.image.addEventListener( "error-changed", ( evt ) => {
-      console.log( evt );
+    this.$.image.addEventListener( "error-changed", () => {
+      const filePath = this._filesToRenderList[ this._transitionIndex ].filePath,
+        fileUrl = this._filesToRenderList[ this._transitionIndex ].fileUrl,
+        errorMessage = "image failed to load";
+
+      this._log( RiseImage.LOG_TYPE_ERROR, RiseImage.EVENT_IMAGE_ERROR, errorMessage, { storage: this._getStorageData( filePath, fileUrl ) });
+      this._sendImageEvent( RiseImage.EVENT_IMAGE_ERROR, { filePath, errorMessage });
     });
   }
 
