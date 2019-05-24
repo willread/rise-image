@@ -125,8 +125,13 @@ class RiseImage extends PolymerElement {
   }
 
   _configureImageEventListeners() {
-    this.$.image.addEventListener( "error-changed", ( evt ) => {
-      console.log( evt );
+    this.$.image.addEventListener( "error-changed", () => {
+      const filePath = this._filesToRenderList[ this._transitionIndex ].filePath,
+        fileUrl = this._filesToRenderList[ this._transitionIndex ].fileUrl,
+        errorMessage = "image failed to load";
+
+      this._log( RiseImage.LOG_TYPE_ERROR, RiseImage.EVENT_IMAGE_ERROR, errorMessage, { storage: this._getStorageData( filePath, fileUrl ) });
+      this._sendImageEvent( RiseImage.EVENT_IMAGE_ERROR, { filePath, errorMessage });
     });
   }
 
@@ -414,23 +419,28 @@ class RiseImage extends PolymerElement {
 
   _handleStartForPreview() {
     // check license for preview will be implemented in some other epic later
-
-    // TODO: handling preview coming soon
+    this._filesList.forEach( file => this._handleImageStatusUpdated({
+      filePath: file,
+      fileUrl: RiseImage.STORAGE_PREFIX + file,
+      status: "current"
+    }));
   }
 
   _handleStart() {
     if ( this._initialStart ) {
       this._initialStart = false;
 
-      if ( !RisePlayerConfiguration.isPreview()) {
-        this._log( RiseImage.LOG_TYPE_INFO, RiseImage.EVENT_START, { files: this.files });
-      }
+      this._log( RiseImage.LOG_TYPE_INFO, RiseImage.EVENT_START, { files: this.files });
 
       this._start();
     }
   }
 
   _log( type, event, details = null, additionalFields ) {
+    if ( RisePlayerConfiguration.isPreview()) {
+      return;
+    }
+
     const componentData = this._getComponentData();
 
     switch ( type ) {
@@ -452,6 +462,8 @@ class RiseImage extends PolymerElement {
       fileInError = this._getManagedFileInError( filePath );
 
     // prevent repetitive logging when component instance is receiving messages from other potential component instances watching same file
+    // Note: to avoid using Lodash or Underscore library for just a .isEqual() function, taking a simple approach to object comparison with JSON.stringify()
+    // as the property order will not change and the data is not large for this object
     if ( fileInError && ( JSON.stringify( details ) === JSON.stringify( fileInError.details ))) {
       return;
     }
@@ -495,7 +507,7 @@ class RiseImage extends PolymerElement {
       return;
     }
 
-    if ( message.status === "FILE-ERROR" ) {
+    if ( message.status.toUpperCase() === "FILE-ERROR" ) {
       this._handleSingleFileError( message );
       return;
     }
@@ -511,14 +523,14 @@ class RiseImage extends PolymerElement {
     this._manageFile( message );
     this._manageFileInError( message, true );
 
-    if ( this._filesToRenderList.length === 1 && status === "DELETED" && this._filesToRenderList.find( file => file.filePath === filePath )) {
+    if ( this._filesToRenderList.length === 1 && status.toUpperCase() === "DELETED" && this._filesToRenderList.find( file => file.filePath === filePath )) {
       this._filesToRenderList = [];
       this._clearDisplayedImage();
 
       return;
     }
 
-    if ( this._filesToRenderList.length < 2 && status === "CURRENT" ) {
+    if ( this._filesToRenderList.length < 2 && status.toUpperCase() === "CURRENT" ) {
       this._configureShowingImages();
     }
   }

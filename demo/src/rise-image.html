@@ -103,8 +103,11 @@
         console.log( "image 2 error", evt.detail );
       } );
 
-      // Uncomment the following line if the image component is marked as non-editable
-      // RisePlayerConfiguration.Helpers.sendStartEvent( image01 );
+      // Uncomment the following line if an image component instance is marked as non-editable
+      // RisePlayerConfiguration.Helpers.sendStartEvent( imageXX );
+
+      // Uncomment if testing directly in browser
+      // [ image01, image02, image03 ].forEach( el => RisePlayerConfiguration.Helpers.sendStartEvent( el ) );
     }
 
     window.addEventListener( "rise-components-ready", configureComponents );

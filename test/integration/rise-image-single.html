@@ -171,7 +171,7 @@
       })
     });
 
-    suite('rise-image on preview', () => {
+    suite('running on preview or directly in browser', () => {
       setup(() => {
         RisePlayerConfiguration.isPreview = () => true;
       });
@@ -180,7 +180,12 @@
         RisePlayerConfiguration.isPreview = () => false;
       });
 
-      // TODO: add tests when supporting preview is ready
+      test('it should render image', () => {
+        element.dispatchEvent( new CustomEvent( "start" ) );
+
+        assert.equal(element.$.image.src, SAMPLE_URL);
+      });
+
     });
   });
 
