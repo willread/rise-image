@@ -1,4 +1,4 @@
-# rise-data-image demo
+# rise-image demo
 
 ## Install polymer tools
 
