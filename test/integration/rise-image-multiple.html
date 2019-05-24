@@ -326,17 +326,10 @@
     suite('running on preview or directly in browser', () => {
       setup(() => {
         RisePlayerConfiguration.isPreview = () => true;
-        RisePlayerConfiguration.LocalStorage = {
-          watchSingleFile: (filePath, handler) => {
-            const file = testFiles.find( file => file.path === filePath );
-            handler({ status: "CURRENT", filePath: file.path, fileUrl: file.url });
-          }
-        };
       });
 
       teardown(() => {
         RisePlayerConfiguration.isPreview = () => false;
-        RisePlayerConfiguration.LocalStorage = {};
       });
 
       test('it should render first image', () => {
