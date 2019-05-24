@@ -462,6 +462,8 @@ class RiseImage extends PolymerElement {
       fileInError = this._getManagedFileInError( filePath );
 
     // prevent repetitive logging when component instance is receiving messages from other potential component instances watching same file
+    // Note: to avoid using Lodash or Underscore library for just a .isEqual() function, taking a simple approach to object comparison with JSON.stringify()
+    // as the property order will not change and the data is not large for this object
     if ( fileInError && ( JSON.stringify( details ) === JSON.stringify( fileInError.details ))) {
       return;
     }
