@@ -39,7 +39,7 @@ This attribute holds a literal value, for example:
 ```
   <rise-image id="rise-image-sample"
     label="Sample"
-    file="risemedialibrary-30007b45-3df0-4c7b-9f7f-7d8ce6443013/logo.png">
+    files="risemedialibrary-abc123/logo.png">
   </rise-image>
 ```
 
