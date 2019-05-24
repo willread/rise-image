@@ -520,9 +520,7 @@ class RiseImage extends PolymerElement {
   }
 
   _handleImageStatusUpdated( message ) {
-    const { filePath, status, fileUrl } = message;
-
-    this._log( RiseImage.LOG_TYPE_INFO, RiseImage.EVENT_IMAGE_STATUS_UPDATED, { status }, { storage: this._getStorageData( filePath, fileUrl ) });
+    const { filePath, status } = message;
 
     this._manageFile( message );
     this._manageFileInError( message, true );
