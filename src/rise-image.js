@@ -65,10 +65,6 @@ class RiseImage extends PolymerElement {
     return "start";
   }
 
-  static get EVENT_IMAGE_STATUS_UPDATED() {
-    return "image-status-updated";
-  }
-
   static get EVENT_IMAGE_ERROR() {
     return "image-error";
   }
@@ -78,7 +74,7 @@ class RiseImage extends PolymerElement {
   }
 
   static get EVENT_SVG_USAGE() {
-    return "svg-usage";
+    return "image-svg-usage";
   }
 
   static get LOG_TYPE_INFO() {

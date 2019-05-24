@@ -9,7 +9,7 @@ https://github.com/Rise-Vision/rise-image/blob/master/demo/README.md
 
 ## Usage
 
-The below illustrates simple usage of the component. The file image is the default ( may be overridden by a user ), and should point to a valid file in Rise Vision GCS storage.
+The below illustrates simple usage of the component. 
 
 There is no need to configure listeners if the component runs as editable ( default operation mode ). See the demo section in this repo for a full working example of an HTML page using the component which will illustrate required imports in the `<head>` of the page.
 
@@ -17,9 +17,14 @@ There is no need to configure listeners if the component runs as editable ( defa
 
 ```
   <body>
-    <rise-image id="rise-image-sample"
-      file="risemedialibrary-30007b45-3df0-4c7b-9f7f-7d8ce6443013/logo.png">
-    </rise-image>
+    <div id="image-sample-container">
+      <rise-image 
+        id="rise-image-sample"
+        files="risemedialibrary-abc123/file1.png|risemedialibrary-abc123/file2.png|risemedialibrary-abc123/file3.png"
+        duration="5"
+        responsive>
+      </rise-image>
+    </div>
 ...
 
   </body>
@@ -45,37 +50,48 @@ If it's not set, the label for the component defaults to "Image", which is appli
 This component receives the following list of attributes:
 
 - **id**: ( string / required ): Unique HTML id with format 'rise-image-<NAME_OR_NUMBER>'.
-- **file** ( string / required ): Valid Rise GCS path. Example: "risemedialibrary-xxxxxx-xxxx-xxxx-xxxx-xxxxxxxx/logo.png".
 - **label**: ( string ): An optional label key for the text that will appear in the template editor. See 'Labels' section above.
+- **files** ( string / required ): List of image file paths separated by pipe symbol. A file path must be a valid GCS file path. A folder path will not be valid. Example GCS path: risemedialibrary-abc-123/images/test2.jpg
+- **duration**: ( number ): The duration in seconds that each image shows for when multiple files are configured. Defaults to 10 seconds.
+- **width**: ( number / required ): Sets the width of image(s). Required if not using _responsive_ attribute.
+- **height**: ( number / required ): Sets the height of image(s). Required if not using _responsive_ attribute.
+- **sizing**: ( string ): Determines how to fill the boundaries of the element. Valid values are "contain" and "cover". Defaults to "contain"".
+  - “contain” : full aspect ratio of the image is contained within the element and letterboxed
+  - “cover” : image is cropped in order to fully cover the bounds of the element
+- **responsive**: ( boolean / non-value attribute ): Applies responsive sizing to the image(s) which will respond to instance parent `<div>` container. When _responsive_ is used, the component will ignore any "width", "height", or "sizing" attribute values
+
+
+
 
 ### Events
 
 The component sends the following events:
 
 - **_configured_**: The component has initialized what it requires to and is ready to handle a _start_ event.
-- **_unlicensed_**: Reported if the display is not licensed to access images using Rise Local Storage. The event is also sent as a warning to BQ.
-- **_image-status-updated_**: The status of an image has been updated. Templates usually can ignore this event, as the displayed image will be updated by the component. This event provides an object with the following properties:
-    - status: "STALE", "CURRENT", "DELETE" and "NOEXIST" for single files.
-    - file: file being watched
-    - url: will only be set if status == 'CURRENT'
-- **_image-error_**: Thrown if an error during the processing of the file happens. The template does not need to handle this, as the component is already logging errors to BQ when running on a display. Provides an object with the following properties: file, errorMessage and errorDetail.
+- **_image-error_**: Thrown if an error during the processing of the files happen. The template does not need to handle this, as the component is already logging errors to BQ when running on a display. Provides an object with the following properties: file, errorMessage and errorDetail.
 
 The component is listening for the following events:
 
 - **_start_**: This event will initiate accessing the image. It can be dispatched on the component when _configured_ event has been fired as that event indicates the component has initialized what it requires to and is ready to make a request to the Financial server to retrieve data.
 
-### Errors
+### Logs to BQ
 
-The component may log the following errors or warnings:
+The component may log the following:
 
-- **_unlicensed_** ( warning ): See above.
-- **_image-error_** ( error ): See above.
+- **_image-start_** ( info ): The component receives the _start_ event and commences execution.
+- **_image-reset_** ( info ): The component observed changes to either _files_ or _duration_ attributes and performs a complete reset to use latest values.
+- **_image-svg-usage_** ( info ): Provides an SVG file _blob size_ and _data url length_ info for investigative purposes.   
+- **_image-load-fail_** ( error ): When attempting to render an available image, the image load failed. 
+- **_image-format-invalid_** ( error ): A GCS path was set that targets a file with an invalid image file format. Valid image file formats are: jpg, jpeg, png, bmp, svg, gif, and webp.
+- **_image-svg-fail_** ( error ): When component is targeting an SVG file, the component converts the local file URL to a data url to support running on Electron Player. This error event indicates the attempt to get data url or render the SVG file failed.
+- **_image-rls-error_** ( error ): An error is received from Rise Local Storage for a file
 
-In every case, examine event-details entry and the other event fields for more information about the problem.
+In every case of an error, examine event-details entry and the other event fields for more information about the problem.
 
 ## Built With
 - [Polymer 3](https://www.polymer-project.org/)
 - [Polymer CLI](https://github.com/Polymer/tools/tree/master/packages/cli)
+- [Polymer iron-image](https://github.com/PolymerElements/iron-image)
 - [WebComponents Polyfill](https://www.webcomponents.org/polyfills/)
 - [npm](https://www.npmjs.org)
 
@@ -88,11 +104,11 @@ Execute the following commands in Terminal:
 
 ```
 npm install
-npm install -g polymer-cli@1.8.0
+npm install -g polymer-cli@1.9.7
 npm run build
 ```
 
-**Note**: If EPERM errors occur then install polymer-cli using the `--unsafe-perm` flag ( `npm install -g polymer-cli@1.8.0 --unsafe-perm` ) and/or using sudo.
+**Note**: If EPERM errors occur then install polymer-cli using the `--unsafe-perm` flag ( `npm install -g polymer-cli@1.9.7 --unsafe-perm` ) and/or using sudo.
 
 ### Testing
 You can run the suite of tests either by command terminal or interactive via Chrome browser.
@@ -112,7 +128,7 @@ Now in your browser, navigate to:
 ```
 http://127.0.0.1:8081/components/rise-image/test/index.html
 ```
-You can also run a specific test page by targeting the page directly:
+You can also run a specific test page by targeting the page directly, for example:
 
 ```
 http://127.0.0.1:8081/components/rise-image/test/unit/rise-image.html
