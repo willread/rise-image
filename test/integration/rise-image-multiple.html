@@ -323,6 +323,57 @@
       });
     });
 
+    suite('running on preview or directly in browser', () => {
+      setup(() => {
+        RisePlayerConfiguration.isPreview = () => true;
+        RisePlayerConfiguration.LocalStorage = {
+          watchSingleFile: (filePath, handler) => {
+            const file = testFiles.find( file => file.path === filePath );
+            handler({ status: "CURRENT", filePath: file.path, fileUrl: file.url });
+          }
+        };
+      });
+
+      teardown(() => {
+        RisePlayerConfiguration.isPreview = () => false;
+        RisePlayerConfiguration.LocalStorage = {};
+      });
+
+      test('it should render first image', () => {
+        element.dispatchEvent( new CustomEvent( "start" ) );
+
+        assert.equal(element.$.image.src, testFiles[ 0 ].url);
+      });
+
+      test('it should start transition timer for two images and show each for 5 seconds', () => {
+        element.dispatchEvent( new CustomEvent( "start" ) );
+
+        assert.equal(element.$.image.src, testFiles[ 0 ].url);
+
+        clock.tick( 5000 );
+
+        assert.equal(element.$.image.src, testFiles[ 1 ].url);
+
+        clock.tick( 5000 );
+
+        assert.equal(element.$.image.src, testFiles[ 0 ].url);
+      });
+
+      test('it should transition all three images', () => {
+        element.dispatchEvent( new CustomEvent( "start" ) );
+
+        // emulate first two images cycle and first two images shown again in the following cycle
+        clock.tick( 20000 );
+
+        assert.equal(element.$.image.src, testFiles[ 2 ].url);
+
+        clock.tick( 5000 );
+
+        assert.equal(element.$.image.src, testFiles[ 0 ].url);
+      });
+
+    });
+
   });
 
 </script>
