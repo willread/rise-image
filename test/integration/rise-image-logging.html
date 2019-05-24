@@ -151,7 +151,7 @@
 
           setTimeout(() => {
               assert.deepEqual( RisePlayerConfiguration.Logger.info.args[ 1 ][ 0 ], componentData );
-              assert.equal( RisePlayerConfiguration.Logger.info.args[ 1 ][ 1 ], "svg-usage");
+              assert.equal( RisePlayerConfiguration.Logger.info.args[ 1 ][ 1 ], "image-svg-usage");
               assert.property( RisePlayerConfiguration.Logger.info.args[ 1 ][ 2 ].svg_details, "blob_size");
               assert.property( RisePlayerConfiguration.Logger.info.args[ 1 ][ 2 ].svg_details, "data_url_length");
               assert.deepEqual( RisePlayerConfiguration.Logger.info.args[ 1 ][ 3 ], {
