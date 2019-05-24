@@ -92,7 +92,7 @@
       } );
     });
 
-    test( "should log an 'image-error' event when FILE-ERROR is received", () => {
+    test( "should log an 'image-rls-error' event when FILE-ERROR is received", () => {
       RisePlayerConfiguration.LocalStorage.watchSingleFile = ( file, handler ) => {
           handler({
               filePath: SAMPLE_PATH,
@@ -108,7 +108,7 @@
         assert.equal( RisePlayerConfiguration.Logger.info.callCount, 1 ); // start
 
         assert.deepEqual( RisePlayerConfiguration.Logger.error.args[ 0 ][ 0 ], componentData );
-        assert.equal( RisePlayerConfiguration.Logger.error.args[ 0 ][ 1 ], "image-error");
+        assert.equal( RisePlayerConfiguration.Logger.error.args[ 0 ][ 1 ], "image-rls-error");
         assert.deepEqual( RisePlayerConfiguration.Logger.error.args[ 0 ][ 2 ], {
             errorMessage: "image download error",
             errorDetail: "network failure"
@@ -118,7 +118,7 @@
         } );
     });
 
-    test( "should log an 'image-error' event when file type is invalid", () => {
+    test( "should log an 'image-format-invalid' event when file type is invalid", () => {
         element.files = "risemedialibrary-30007b45-3df0-4c7b-9f7f-7d8ce6443013/test.txt";
 
         element.dispatchEvent( new CustomEvent( "start" ));
@@ -126,10 +126,8 @@
         assert.equal( RisePlayerConfiguration.Logger.info.callCount, 1 ); // start
 
         assert.deepEqual( RisePlayerConfiguration.Logger.error.args[ 0 ][ 0 ], componentData );
-        assert.equal( RisePlayerConfiguration.Logger.error.args[ 0 ][ 1 ], "image-error");
-        assert.deepEqual( RisePlayerConfiguration.Logger.error.args[ 0 ][ 2 ], {
-            errorMessage: "Invalid file format"
-        });
+        assert.equal( RisePlayerConfiguration.Logger.error.args[ 0 ][ 1 ], "image-format-invalid");
+        assert.isNull( RisePlayerConfiguration.Logger.error.args[ 0 ][ 2 ]);
         assert.deepEqual( RisePlayerConfiguration.Logger.error.args[ 0 ][ 3 ], {
             storage: {
                 configuration: "storage file",
@@ -183,7 +181,7 @@
           }, 3000 );
     });
 
-    test("should log an 'image-error' when rendering an SVG file files", (done) => {
+    test("should log an 'image-svg-fail' when rendering an SVG file", (done) => {
         sinon.stub(element, "_getDataUrlFromSVGLocalUrl").callsFake(() => {
             return Promise.reject("Request failed: 404: Not found");
         });
@@ -201,7 +199,7 @@
 
         setTimeout( () => {
             assert.deepEqual( RisePlayerConfiguration.Logger.error.args[ 0 ][ 0 ], componentData );
-            assert.equal( RisePlayerConfiguration.Logger.error.args[ 0 ][ 1 ], "image-error");
+            assert.equal( RisePlayerConfiguration.Logger.error.args[ 0 ][ 1 ], "image-svg-fail");
             assert.equal( RisePlayerConfiguration.Logger.error.args[ 0 ][ 2 ], "Request failed: 404: Not found");
             assert.deepEqual( RisePlayerConfiguration.Logger.error.args[ 0 ][ 3 ], {
                 storage: {

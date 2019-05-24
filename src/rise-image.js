@@ -126,12 +126,16 @@ class RiseImage extends PolymerElement {
 
   _configureImageEventListeners() {
     this.$.image.addEventListener( "error-changed", () => {
-      const filePath = this._filesToRenderList[ this._transitionIndex ].filePath,
-        fileUrl = this._filesToRenderList[ this._transitionIndex ].fileUrl,
-        errorMessage = "image failed to load";
+      // to prevent test coverage failing
+      if ( this._filesToRenderList.length === 0 ) {
+        return;
+      }
 
-      this._log( RiseImage.LOG_TYPE_ERROR, RiseImage.EVENT_IMAGE_ERROR, errorMessage, { storage: this._getStorageData( filePath, fileUrl ) });
-      this._sendImageEvent( RiseImage.EVENT_IMAGE_ERROR, { filePath, errorMessage });
+      const filePath = this._filesToRenderList[ this._transitionIndex ].filePath,
+        fileUrl = this._filesToRenderList[ this._transitionIndex ].fileUrl;
+
+      this._log( RiseImage.LOG_TYPE_ERROR, "image-load-fail", null, { storage: this._getStorageData( filePath, fileUrl ) });
+      this._sendImageEvent( RiseImage.EVENT_IMAGE_ERROR, { filePath, errorMessage: "image load failed" });
     });
   }
 
@@ -270,7 +274,7 @@ class RiseImage extends PolymerElement {
     });
 
     invalidFiles.forEach( invalidFile => {
-      this._log( RiseImage.LOG_TYPE_ERROR, RiseImage.EVENT_IMAGE_ERROR, { errorMessage: "Invalid file format" }, { storage: this._getStorageData( invalidFile ) });
+      this._log( RiseImage.LOG_TYPE_ERROR, "image-format-invalid", null, { storage: this._getStorageData( invalidFile ) });
     });
 
     if ( !filteredFiles || filteredFiles.length === 0 ) {
@@ -295,7 +299,7 @@ class RiseImage extends PolymerElement {
           this.$.image.src = dataUrl;
         })
         .catch( error => {
-          this._log( RiseImage.LOG_TYPE_ERROR, RiseImage.EVENT_IMAGE_ERROR, error, { storage: this._getStorageData( filePath, fileUrl ) });
+          this._log( RiseImage.LOG_TYPE_ERROR, "image-svg-fail", error, { storage: this._getStorageData( filePath, fileUrl ) });
           this._sendImageEvent( RiseImage.EVENT_IMAGE_ERROR, { filePath, errorMessage: error });
         });
     } else {
@@ -483,7 +487,7 @@ class RiseImage extends PolymerElement {
       "Invalid response with status code [CODE]"
      */
 
-    this._log( RiseImage.LOG_TYPE_ERROR, RiseImage.EVENT_IMAGE_ERROR, {
+    this._log( RiseImage.LOG_TYPE_ERROR, "image-rls-error", {
       errorMessage: message.errorMessage,
       errorDetail: message.errorDetail
     }, { storage: this._getStorageData( filePath, fileUrl ) });
