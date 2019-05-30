@@ -9,7 +9,7 @@ https://github.com/Rise-Vision/rise-image/blob/master/demo/README.md
 
 ## Usage
 
-The below illustrates simple usage of the component. 
+The below illustrates simple usage of the component.
 
 There is no need to configure listeners if the component runs as editable ( default operation mode ). See the demo section in this repo for a full working example of an HTML page using the component which will illustrate required imports in the `<head>` of the page.
 
@@ -18,7 +18,7 @@ There is no need to configure listeners if the component runs as editable ( defa
 ```
   <body>
     <div id="image-sample-container">
-      <rise-image 
+      <rise-image
         id="rise-image-sample"
         files="risemedialibrary-abc123/file1.png|risemedialibrary-abc123/file2.png|risemedialibrary-abc123/file3.png"
         duration="5"
@@ -51,7 +51,10 @@ This component receives the following list of attributes:
 
 - **id**: ( string / required ): Unique HTML id with format 'rise-image-<NAME_OR_NUMBER>'.
 - **label**: ( string ): An optional label key for the text that will appear in the template editor. See 'Labels' section above.
-- **files** ( string / required ): List of image file paths separated by pipe symbol. A file path must be a valid GCS file path. A folder path will not be valid. Example GCS path: risemedialibrary-abc-123/images/test2.jpg
+- **files** ( string / required ): List of image file paths separated by pipe symbol. A file path must be a valid GCS file path. A folder path will not be valid. For example, this is a default folder path from Rise Storage:
+https://storage.googleapis.com/risemedialibrary-7fa5ee92-7deb-450b-a8d5-e5ed648c575f/Template%20Library/Global%20Assets/logo-white.png.
+To create a valid GCS path, remove *https://storage.googleapis.com/* and replace *%20* with a space.
+The resulting GCS path is: risemedialibrary-7fa5ee92-7deb-450b-a8d5-e5ed648c575f/Template Library/Global Assets/logo-white.png.
 - **duration**: ( number ): The duration in seconds that each image shows for when multiple files are configured. Defaults to 10 seconds.
 - **width**: ( number / required ): Sets the width of image(s). Required if not using _responsive_ attribute.
 - **height**: ( number / required ): Sets the height of image(s). Required if not using _responsive_ attribute.
@@ -81,8 +84,8 @@ The component may log the following:
 
 - **_image-start_** ( info ): The component receives the _start_ event and commences execution.
 - **_image-reset_** ( info ): The component observed changes to either _files_ or _duration_ attributes and performs a complete reset to use latest values.
-- **_image-svg-usage_** ( info ): Provides an SVG file _blob size_ and _data url length_ info for investigative purposes.   
-- **_image-load-fail_** ( error ): When attempting to render an available image, the image load failed. 
+- **_image-svg-usage_** ( info ): Provides an SVG file _blob size_ and _data url length_ info for investigative purposes.
+- **_image-load-fail_** ( error ): When attempting to render an available image, the image load failed.
 - **_image-format-invalid_** ( error ): A GCS path was set that targets a file with an invalid image file format. Valid image file formats are: jpg, jpeg, png, bmp, svg, gif, and webp.
 - **_image-svg-fail_** ( error ): When component is targeting an SVG file, the component converts the local file URL to a data url to support running on Electron Player. This error event indicates the attempt to get data url or render the SVG file failed.
 - **_image-rls-error_** ( error ): An error is received from Rise Local Storage for a file
