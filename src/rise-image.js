@@ -38,6 +38,10 @@ class RiseImage extends PolymerElement {
         type: String,
         value: "contain"
       },
+      position: {
+        type: String,
+        value: "center"
+      },
       responsive: {
         type: Boolean,
         value: false
@@ -287,6 +291,7 @@ class RiseImage extends PolymerElement {
       this.$.image.width = isNaN( this.width ) ? parseInt( this.width, 10 ) : this.width;
       this.$.image.height = isNaN( this.height ) ? parseInt( this.height, 10 ) : this.height;
       this.$.image.sizing = this.sizing;
+      this.$.image.position = this.position;
     }
 
     if ( this._getStorageFileFormat( filePath ) === "svg" ) {

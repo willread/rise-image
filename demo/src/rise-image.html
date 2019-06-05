@@ -56,9 +56,21 @@
         position: relative;
         background-color: aqua;
       }
+
+      #image04Wrapper {
+        width: 350px;
+        height: 350px;
+        position: relative;
+        background-color: coral;
+      }
+
+      #image04Wrapper > rise-image {
+        background-color: cornflowerblue;
+      }
     </style>
   </head>
   <body>
+  <p>Responsive</p>
   <div id="image01Wrapper">
     <rise-image
       id="rise-image-01"
@@ -68,7 +80,7 @@
     </rise-image>
   </div>
 
-
+  <p>Fixed - 300 x 200 - SVG</p>
   <div id="image02Wrapper">
     <rise-image
       id="rise-image-02"
@@ -80,6 +92,7 @@
     </rise-image>
   </div>
 
+  <p>Responsive - Multiple files</p>
   <div id="image03Wrapper">
     <rise-image
       id="rise-image-03"
@@ -90,11 +103,25 @@
     </rise-image>
   </div>
 
+  <p>Fixed - Position, top right</p>
+  <div id="image04Wrapper">
+    <rise-image
+      id="rise-image-04"
+      label="SVG Image"
+      width="300"
+      height="200"
+      sizing="contain"
+      position="top right"
+      files="risemedialibrary-7fa5ee92-7deb-450b-a8d5-e5ed648c575f/rise-image-demo/kcu_logo.png">
+    </rise-image>
+  </div>
+
   <script>
     function configureComponents() {
       const image01 = document.querySelector('#rise-image-01'),
         image02 = document.querySelector('#rise-image-02'),
-        image03 = document.querySelector('#rise-image-03');
+        image03 = document.querySelector('#rise-image-03'),
+        image04 = document.querySelector('#rise-image-04');
 
       image01.addEventListener( "image-error", ( evt ) => {
         console.log( "image 1 error", evt.detail );
@@ -105,14 +132,18 @@
       } );
 
       image03.addEventListener( "image-error", ( evt ) => {
-        console.log( "image 2 error", evt.detail );
+        console.log( "image 3 error", evt.detail );
+      } );
+
+      image04.addEventListener( "image-error", ( evt ) => {
+        console.log( "image 4 error", evt.detail );
       } );
 
       // Uncomment the following line if an image component instance is marked as non-editable
       // RisePlayerConfiguration.Helpers.sendStartEvent( imageXX );
 
       // Uncomment if testing directly in browser
-      // [ image01, image02, image03 ].forEach( el => RisePlayerConfiguration.Helpers.sendStartEvent( el ) );
+      // [ image01, image02, image03, image04 ].forEach( el => RisePlayerConfiguration.Helpers.sendStartEvent( el ) );
     }
 
     window.addEventListener( "rise-components-ready", configureComponents );

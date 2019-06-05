@@ -28,6 +28,7 @@
           width="300"
           height="240"
           sizing="contain"
+          position="top"
           files="risemedialibrary-30007b45-3df0-4c7b-9f7f-7d8ce6443013/logo.png">
         </rise-image>
       </template>
@@ -205,7 +206,7 @@
             element._getDataUrlFromSVGLocalUrl.restore();
           } );
 
-          test( "should ignore width/height/sizing and apply responsive styling", () => {
+          test( "should ignore width/height/sizing/position and apply responsive styling", () => {
             element.responsive = true;
 
             element._renderImage( SAMPLE_PATH, SAMPLE_URL );
@@ -214,15 +215,17 @@
             assert.isNull(element.$.image.width);
             assert.isNull(element.$.image.height);
             assert.isNull(element.$.image.sizing);
+            assert.equal(element.$.image.position, "center"); // iron-image enforces "center" as default value
           } );
 
-          test( "should apply fixed width/height/sizing", () => {
+          test( "should apply fixed width/height/sizing/position", () => {
             element._renderImage( SAMPLE_PATH, SAMPLE_URL );
 
             assert.isFalse(element.$.image.updateStyles.called);
             assert.equal(element.$.image.width, 300);
             assert.equal(element.$.image.height, 240);
             assert.equal(element.$.image.sizing, "contain");
+            assert.equal(element.$.image.position, "top");
 
           } );
 
