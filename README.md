@@ -61,7 +61,7 @@ The resulting GCS path is: risemedialibrary-7fa5ee92-7deb-450b-a8d5-e5ed648c575f
 - **sizing**: ( string ): Determines how to fill the boundaries of the element. Valid values are "contain" and "cover". Defaults to "contain".
   - “contain” : full aspect ratio of the image is contained within the element and letterboxed
   - “cover” : image is cropped in order to fully cover the bounds of the element
-- **position**: ( string ): Determines how the image is aligned within the element bounds when _sizing_ is applied. Defaults to "center".
+- **position**: ( string ): Determines how the image is aligned within the element bounds when _sizing_ is applied. Valid values correspond to the CSS background-position property. Defaults to "center".
 - **responsive**: ( boolean / non-value attribute ): Applies responsive sizing to the image(s) which will respond to instance parent `<div>` container. When _responsive_ is used, the component will ignore any "width", "height", "sizing", or "position" attribute values
 - **non-editable**: ( empty / optional ): If present, it indicates this component is not available for customization in the template editor.
 
