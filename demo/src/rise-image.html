@@ -124,19 +124,19 @@
         image04 = document.querySelector('#rise-image-04');
 
       image01.addEventListener( "image-error", ( evt ) => {
-        console.log( "image 1 error", evt.detail );
+        console.log( "image 1 error", JSON.stringify(evt.detail) );
       } );
 
       image02.addEventListener( "image-error", ( evt ) => {
-        console.log( "image 2 error", evt.detail );
+        console.log( "image 2 error", JSON.stringify(evt.detail) );
       } );
 
       image03.addEventListener( "image-error", ( evt ) => {
-        console.log( "image 3 error", evt.detail );
+        console.log( "image 3 error", JSON.stringify(evt.detail) );
       } );
 
       image04.addEventListener( "image-error", ( evt ) => {
-        console.log( "image 4 error", evt.detail );
+        console.log( "image 4 error", JSON.stringify(evt.detail) );
       } );
 
       // Uncomment the following line if an image component instance is marked as non-editable
