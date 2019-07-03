@@ -213,6 +213,9 @@
             element._renderImage( SAMPLE_PATH, SAMPLE_URL );
 
             assert.isTrue(element.$.image.updateStyles.called);
+            assert.equal(element.$.image.style.width, "100%");
+            assert.equal(element.$.image.style.height, "auto");
+            assert.equal(getComputedStyle(element.$.image).getPropertyValue("--iron-image-width"), "100%");
             assert.isNull(element.$.image.width);
             assert.isNull(element.$.image.height);
             assert.isNull(element.$.image.sizing);
