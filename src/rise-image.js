@@ -269,7 +269,7 @@ class RiseImage extends RiseElement {
 
   _renderImage( filePath, fileUrl ) {
     if ( this.responsive ) {
-      this.$.image.updateStyles({ "--iron-image-width": "100%" });
+      this.$.image.updateStyles({ "--iron-image-width": "100%", "width": "100%", "height": "auto" });
     } else {
       this.$.image.width = isNaN( this.width ) ? parseInt( this.width, 10 ) : this.width;
       this.$.image.height = isNaN( this.height ) ? parseInt( this.height, 10 ) : this.height;
