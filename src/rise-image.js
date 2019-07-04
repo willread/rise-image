@@ -269,8 +269,9 @@ class RiseImage extends RiseElement {
 
   _renderImage( filePath, fileUrl ) {
     if ( this.responsive ) {
-      this.$.image.updateStyles({ "--iron-image-width": "100%", "width": "100%", "height": "auto" });
+      this.$.image.updateStyles({ "--iron-image-width": "100%", "width": "100%", "height": "auto", "display": "inline-block" });
     } else {
+      this.$.image.updateStyles({ "display": "inline-block" });
       this.$.image.width = isNaN( this.width ) ? parseInt( this.width, 10 ) : this.width;
       this.$.image.height = isNaN( this.height ) ? parseInt( this.height, 10 ) : this.height;
       this.$.image.sizing = this.sizing;
@@ -293,6 +294,7 @@ class RiseImage extends RiseElement {
 
   _clearDisplayedImage() {
     this.$.image.src = "";
+    this.$.image.updateStyles({ "display": "none" });
   }
 
   _onShowImageComplete() {
