@@ -212,7 +212,7 @@
 
             element._renderImage( SAMPLE_PATH, SAMPLE_URL );
 
-            assert.isTrue(element.$.image.updateStyles.called);
+            assert.isTrue(element.$.image.updateStyles.calledWith({ "--iron-image-width": "100%", "width": "100%", "height": "auto", "display": "inline-block" }));
             assert.equal(element.$.image.style.width, "100%");
             assert.equal(element.$.image.style.height, "auto");
             assert.equal(getComputedStyle(element.$.image).getPropertyValue("--iron-image-width"), "100%");
@@ -225,7 +225,7 @@
           test( "should apply fixed width/height/sizing/position", () => {
             element._renderImage( SAMPLE_PATH, SAMPLE_URL );
 
-            assert.isFalse(element.$.image.updateStyles.called);
+            assert.isTrue(element.$.image.updateStyles.calledWith({"display": "inline-block"}));
             assert.equal(element.$.image.width, 300);
             assert.equal(element.$.image.height, 240);
             assert.equal(element.$.image.sizing, "contain");
