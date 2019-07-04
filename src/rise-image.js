@@ -107,6 +107,9 @@ class RiseImage extends RiseElement {
   ready() {
     super.ready();
     this._configureImageEventListeners();
+
+    this.addEventListener( "rise-presentation-play", () => this._reset());
+    this.addEventListener( "rise-presentation-stop", () => this._stop());
   }
 
   _configureImageEventListeners() {
@@ -162,16 +165,7 @@ class RiseImage extends RiseElement {
   _reset() {
     if ( !this._initialStart ) {
 
-      timeOut.cancel( this._transitionTimer );
-      this._clearDisplayedImage();
-
-      this._watchInitiated = false;
-      this._filesList = [];
-      this._managedFiles = [];
-      this._managedFilesInError = [];
-      this._filesToRenderList = [];
-      this._transitionTimer = null;
-      this._transitionIndex = 0;
+      this._stop();
 
       this._log( RiseImage.LOG_TYPE_INFO, RiseImage.EVENT_IMAGE_RESET, { files: this.files });
       this._start();
@@ -297,10 +291,20 @@ class RiseImage extends RiseElement {
     this.$.image.updateStyles({ "display": "none" });
   }
 
+  _isDone() {
+    return this._transitionIndex === this._managedFiles.length - 1 && this.hasAttribute( "play-until-done" );
+  }
+
   _onShowImageComplete() {
+    if ( this._isDone()) {
+      return this._sendDoneEvent( true );
+    }
+
     if ( this._transitionIndex < ( this._filesToRenderList.length - 1 )) {
       this._transitionIndex += 1;
-      this._renderImage( this._filesToRenderList[ this._transitionIndex ].filePath, this._filesToRenderList[ this._transitionIndex ].fileUrl );
+      const fileToRender = this._filesToRenderList[ this._transitionIndex ];
+
+      this._renderImage( fileToRender.filePath, fileToRender.fileUrl );
       this._startTransitionTimer();
     } else {
       this._configureShowingImages();
@@ -407,6 +411,19 @@ class RiseImage extends RiseElement {
     }
   }
 
+  _stop() {
+    timeOut.cancel( this._transitionTimer );
+    this._clearDisplayedImage();
+
+    this._watchInitiated = false;
+    this._filesList = [];
+    this._managedFiles = [];
+    this._managedFilesInError = [];
+    this._filesToRenderList = [];
+    this._transitionTimer = null;
+    this._transitionIndex = 0;
+  }
+
   _handleStartForPreview() {
     // check license for preview will be implemented in some other epic later
     this._filesList.forEach( file => this._handleImageStatusUpdated({
@@ -508,6 +525,10 @@ class RiseImage extends RiseElement {
     if ( this._filesToRenderList.length < 2 && status.toUpperCase() === "CURRENT" ) {
       this._configureShowingImages();
     }
+  }
+
+  _sendDoneEvent( done ) {
+    super._sendEvent( "report-done", { done });
   }
 
   _sendImageEvent( eventName, detail = {}) {
