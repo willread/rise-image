@@ -315,7 +315,17 @@ class RiseImage extends RiseElement {
     this.duration = parseInt( this.duration, 10 );
 
     if ( !isNaN( this.duration ) && this.duration !== 0 ) {
+      timeOut.cancel( this._transitionTimer );
       this._transitionTimer = timeOut.run( this._onShowImageComplete.bind( this ), this.duration * 1000 );
+    }
+  }
+
+  _startEmptyPlayUntilDoneTimer() {
+    if ( this.hasAttribute( "play-until-done" )) {
+      const duration = parseInt( this.duration, 10 ) || 10;
+
+      timeOut.cancel( this._transitionTimer );
+      this._transitionTimer = timeOut.run( this._sendDoneEvent.bind( this, [ true ]), duration * 1000 );
     }
   }
 
@@ -326,9 +336,7 @@ class RiseImage extends RiseElement {
     if ( this._filesToRenderList.length > 0 ) {
       this._renderImage( this._filesToRenderList[ 0 ].filePath, this._filesToRenderList[ 0 ].fileUrl );
 
-      if ( this._filesToRenderList.length > 1 ) {
-        this._startTransitionTimer();
-      }
+      this._startTransitionTimer();
     } else {
       this._clearDisplayedImage();
     }
@@ -387,13 +395,13 @@ class RiseImage extends RiseElement {
 
   _start() {
     if ( !this._isValidFiles( this.files )) {
-      return;
+      return this._startEmptyPlayUntilDoneTimer();
     }
 
     this._filesList = this._filterInvalidFileTypes( this.files.split( "|" ));
 
     if ( !this._filesList || !this._filesList.length || this._filesList.length === 0 ) {
-      return;
+      return this._startEmptyPlayUntilDoneTimer();
     }
 
     if ( RisePlayerConfiguration.isPreview()) {
