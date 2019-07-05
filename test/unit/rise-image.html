@@ -285,7 +285,7 @@
         } );
 
        suite( "uptime", () => {
-          let sandbox = sinon.createSandbox();
+          const sandbox = sinon.createSandbox();
 
           setup( () => {
             sandbox.stub(element.__proto__.__proto__, '_setUptimeError');
@@ -335,7 +335,97 @@
           });
 
         });
+
+        suite( "Play Unitl Done", () => {
+
+          suite( "_isDone()", () => {
+    
+            test("should return false when element is not configured for PUD", () => {
+              assert.isFalse( element._isDone());
+            });
+
+            test("should return true when element is configured for PUD and transition index is last element", () => {
+              element.setAttribute( "play-until-done", true);
+              
+              element._transitionIndex = 0;
+              element._managedFiles = [{"filePath":"risemedialibrary-7fa5ee92-7deb-450b-a8d5-e5ed648c575f/DSC01624.JPG"}];
+              
+              assert.isTrue( element._isDone());
+            });
+
+            test("should return false when element is configured for PUD and transition index is not last element", () => {
+              element.setAttribute( "play-until-done", true);
+              
+              element._transitionIndex = 0;
+              element._managedFiles = [{ filePath: "risemedialibrary-7fa5ee92-7deb-450b-a8d5-e5ed648c575f/DSC01624.JPG"}, { filePath: "risemedialibrary-30007b45-3df0-4c7b-9f7f-7d8ce6443013/logo.png"}];
+              
+              assert.isFalse( element._isDone());
+            });
+
+          });
+
+          suite( "_onShowImageComplete()", () => {
+            const sandbox = sinon.createSandbox();
+
+            setup( () => {
+              sandbox.stub(element, '_sendDoneEvent');
+            });
+
+            teardown( () => {
+              sandbox.restore();
+            });
+    
+            test("should send report-done event when it is done", () => {
+              element.setAttribute( "play-until-done", true);
+              
+              element._transitionIndex = 0;
+              element._managedFiles = [{ filePath: "risemedialibrary-7fa5ee92-7deb-450b-a8d5-e5ed648c575f/DSC01624.JPG"}];
+
+              element._onShowImageComplete();
+
+              assert.isTrue( element._sendDoneEvent.calledWith(true) );
+            });
+
+          });
+
+          suite( "_startEmptyPlayUntilDoneTimer()", () => {
+            const sandbox = sinon.createSandbox();
+
+            setup( () => {
+              sandbox.stub(element, '_startEmptyPlayUntilDoneTimer');
+            });
+
+            teardown( () => {
+              sandbox.restore();
+            });
+    
+            test("should start empty play until done timer on empty files list", () => {
+              element.setAttribute( "play-until-done", true);
+              
+              element.files = "";
+
+              element._start();
+
+              assert.isTrue( element._startEmptyPlayUntilDoneTimer.called );
+            });
+
+            test("should start empty play until done timer on invalid files list", () => {
+              element.setAttribute( "play-until-done", true);
+              
+              element.files = "risemedialibrary-abc123/README.md";
+
+              element._start();
+
+              assert.isTrue( element._startEmptyPlayUntilDoneTimer.called );
+            });
+
+          });
+          
+        });
+
       });
+
+     
 
     </script>
   </body>
