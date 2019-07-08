@@ -348,7 +348,7 @@
               element.setAttribute( "play-until-done", true);
               
               element._transitionIndex = 0;
-              element._managedFiles = [{"filePath":"risemedialibrary-7fa5ee92-7deb-450b-a8d5-e5ed648c575f/DSC01624.JPG"}];
+              element._filesToRenderList = [{"filePath":"risemedialibrary-7fa5ee92-7deb-450b-a8d5-e5ed648c575f/DSC01624.JPG"}];
               
               assert.isTrue( element._isDone());
             });
@@ -357,7 +357,7 @@
               element.setAttribute( "play-until-done", true);
               
               element._transitionIndex = 0;
-              element._managedFiles = [{ filePath: "risemedialibrary-7fa5ee92-7deb-450b-a8d5-e5ed648c575f/DSC01624.JPG"}, { filePath: "risemedialibrary-30007b45-3df0-4c7b-9f7f-7d8ce6443013/logo.png"}];
+              element._filesToRenderList = [{ filePath: "risemedialibrary-7fa5ee92-7deb-450b-a8d5-e5ed648c575f/DSC01624.JPG"}, { filePath: "risemedialibrary-30007b45-3df0-4c7b-9f7f-7d8ce6443013/logo.png"}];
               
               assert.isFalse( element._isDone());
             });
@@ -379,7 +379,7 @@
               element.setAttribute( "play-until-done", true);
               
               element._transitionIndex = 0;
-              element._managedFiles = [{ filePath: "risemedialibrary-7fa5ee92-7deb-450b-a8d5-e5ed648c575f/DSC01624.JPG"}];
+              element._filesToRenderList = [{ filePath: "risemedialibrary-7fa5ee92-7deb-450b-a8d5-e5ed648c575f/DSC01624.JPG"}];
 
               element._onShowImageComplete();
 

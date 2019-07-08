@@ -98,7 +98,7 @@
 
         clock.tick( 5000 );
 
-        assert.equal(element.$.image.src, testFiles[ 0 ].url);
+        assert.equal(element.$.image.src, testFiles[ 2 ].url);
       });
 
       test('it should transition all three images when all are available', () => {
@@ -107,11 +107,11 @@
         // emulate first two images cycle and first two images shown again in the following cycle
         clock.tick( 20000 );
 
-        assert.equal(element.$.image.src, testFiles[ 2 ].url);
+        assert.equal(element.$.image.src, testFiles[ 1 ].url);
 
         clock.tick( 5000 );
 
-        assert.equal(element.$.image.src, testFiles[ 0 ].url);
+        assert.equal(element.$.image.src, testFiles[ 2 ].url);
       });
 
     });
@@ -168,11 +168,11 @@
         // emulate first two images cycle and first two images shown again in the following cycle
         clock.tick( 20000 );
 
-        assert.equal(element.$.image.src, testFiles[ 2 ].url);
+        assert.equal(element.$.image.src, testFiles[ 1 ].url);
 
         clock.tick( 5000 );
 
-        assert.equal(element.$.image.src, testFiles[ 0 ].url);
+        assert.equal(element.$.image.src, testFiles[ 2 ].url);
 
         element._handleSingleFileUpdate( {
           filePath: testFiles[ 0 ].path,
@@ -189,9 +189,9 @@
         // should be 2nd test image now that starts
         assert.equal(element.$.image.src, testFiles[ 1 ].url);
 
-        clock.tick( 10000 );
+        clock.tick( 5000 );
 
-        assert.equal(element.$.image.src, testFiles[ 1 ].url);
+        assert.equal(element.$.image.src, testFiles[ 2 ].url);
       });
 
       test('it should transition all three images after file error is corrected', () => {
@@ -200,7 +200,7 @@
         // emulate first two images cycle and full following cycle
         clock.tick( 25000 );
 
-        assert.equal(element.$.image.src, testFiles[ 0 ].url);
+        assert.equal(element.$.image.src, testFiles[ 2 ].url);
 
         element._handleSingleFileUpdate( {
           filePath: testFiles[ 0 ].path,
@@ -227,11 +227,11 @@
         clock.tick( 10000 );
 
         // should be 1st test file that now starts
-        assert.equal(element.$.image.src, testFiles[ 0 ].url);
+        assert.equal(element.$.image.src, testFiles[ 2 ].url);
 
         clock.tick( 15000 );
 
-        assert.equal(element.$.image.src, testFiles[ 0 ].url);
+        assert.equal(element.$.image.src, testFiles[ 2 ].url);
       });
 
       test('it should clear displayed image when error is received for all files from RLS', () => {
@@ -240,11 +240,11 @@
         // emulate first two images cycle and first two images shown again in the following cycle
         clock.tick( 20000 );
 
-        assert.equal(element.$.image.src, testFiles[ 2 ].url);
+        assert.equal(element.$.image.src, testFiles[ 1 ].url);
 
         clock.tick( 5000 );
 
-        assert.equal(element.$.image.src, testFiles[ 0 ].url);
+        assert.equal(element.$.image.src, testFiles[ 2 ].url);
 
         element._handleSingleFileUpdate( {
           filePath: testFiles[ 0 ].path,
@@ -298,11 +298,11 @@
         // emulate first two images cycle and first two images shown again in the following cycle
         clock.tick( 20000 );
 
-        assert.equal(element.$.image.src, testFiles[ 2 ].url);
+        assert.equal(element.$.image.src, testFiles[ 1 ].url);
 
         clock.tick( 5000 );
 
-        assert.equal(element.$.image.src, testFiles[ 0 ].url);
+        assert.equal(element.$.image.src, testFiles[ 2 ].url);
 
         element._handleSingleFileUpdate( {
           filePath: testFiles[ 2 ].path,
@@ -350,7 +350,7 @@
 
         clock.tick( 5000 );
 
-        assert.equal(element.$.image.src, testFiles[ 0 ].url);
+        assert.equal(element.$.image.src, testFiles[ 2 ].url);
       });
 
       test('it should transition all three images', () => {
@@ -359,11 +359,11 @@
         // emulate first two images cycle and first two images shown again in the following cycle
         clock.tick( 20000 );
 
-        assert.equal(element.$.image.src, testFiles[ 2 ].url);
+        assert.equal(element.$.image.src, testFiles[ 1 ].url);
 
         clock.tick( 5000 );
 
-        assert.equal(element.$.image.src, testFiles[ 0 ].url);
+        assert.equal(element.$.image.src, testFiles[ 2 ].url);
       });
 
     });

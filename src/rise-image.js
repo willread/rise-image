@@ -292,7 +292,7 @@ class RiseImage extends RiseElement {
   }
 
   _isDone() {
-    return this._transitionIndex === this._managedFiles.length - 1 && this.hasAttribute( "play-until-done" );
+    return this._transitionIndex === this._filesToRenderList.length - 1 && this.hasAttribute( "play-until-done" );
   }
 
   _onShowImageComplete() {
@@ -334,7 +334,9 @@ class RiseImage extends RiseElement {
     this._transitionIndex = 0;
 
     if ( this._filesToRenderList.length > 0 ) {
-      this._renderImage( this._filesToRenderList[ 0 ].filePath, this._filesToRenderList[ 0 ].fileUrl );
+      const fileToRender = this._filesToRenderList[ this._transitionIndex ];
+
+      this._renderImage( fileToRender.filePath, fileToRender.fileUrl );
 
       this._startTransitionTimer();
     } else {
@@ -530,7 +532,7 @@ class RiseImage extends RiseElement {
       return;
     }
 
-    if ( this._filesToRenderList.length < 2 && status.toUpperCase() === "CURRENT" ) {
+    if ( status.toUpperCase() === "CURRENT" ) {
       this._configureShowingImages();
     }
   }
