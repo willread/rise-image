@@ -107,6 +107,9 @@ class RiseImage extends RiseElement {
   ready() {
     super.ready();
     this._configureImageEventListeners();
+
+    this.addEventListener( "rise-presentation-play", () => this._reset());
+    this.addEventListener( "rise-presentation-stop", () => this._stop());
   }
 
   _configureImageEventListeners() {
@@ -162,16 +165,7 @@ class RiseImage extends RiseElement {
   _reset() {
     if ( !this._initialStart ) {
 
-      timeOut.cancel( this._transitionTimer );
-      this._clearDisplayedImage();
-
-      this._watchInitiated = false;
-      this._filesList = [];
-      this._managedFiles = [];
-      this._managedFilesInError = [];
-      this._filesToRenderList = [];
-      this._transitionTimer = null;
-      this._transitionIndex = 0;
+      this._stop();
 
       this._log( RiseImage.LOG_TYPE_INFO, RiseImage.EVENT_IMAGE_RESET, { files: this.files });
       this._start();
@@ -297,10 +291,20 @@ class RiseImage extends RiseElement {
     this.$.image.updateStyles({ "display": "none" });
   }
 
+  _isDone() {
+    return this._transitionIndex === this._filesToRenderList.length - 1 && this.hasAttribute( "play-until-done" );
+  }
+
   _onShowImageComplete() {
+    if ( this._isDone()) {
+      return this._sendDoneEvent( true );
+    }
+
     if ( this._transitionIndex < ( this._filesToRenderList.length - 1 )) {
       this._transitionIndex += 1;
-      this._renderImage( this._filesToRenderList[ this._transitionIndex ].filePath, this._filesToRenderList[ this._transitionIndex ].fileUrl );
+      const fileToRender = this._filesToRenderList[ this._transitionIndex ];
+
+      this._renderImage( fileToRender.filePath, fileToRender.fileUrl );
       this._startTransitionTimer();
     } else {
       this._configureShowingImages();
@@ -311,7 +315,17 @@ class RiseImage extends RiseElement {
     this.duration = parseInt( this.duration, 10 );
 
     if ( !isNaN( this.duration ) && this.duration !== 0 ) {
+      timeOut.cancel( this._transitionTimer );
       this._transitionTimer = timeOut.run( this._onShowImageComplete.bind( this ), this.duration * 1000 );
+    }
+  }
+
+  _startEmptyPlayUntilDoneTimer() {
+    if ( this.hasAttribute( "play-until-done" )) {
+      const duration = parseInt( this.duration, 10 ) || 10;
+
+      timeOut.cancel( this._transitionTimer );
+      this._transitionTimer = timeOut.run( this._sendDoneEvent.bind( this, [ true ]), duration * 1000 );
     }
   }
 
@@ -320,11 +334,11 @@ class RiseImage extends RiseElement {
     this._transitionIndex = 0;
 
     if ( this._filesToRenderList.length > 0 ) {
-      this._renderImage( this._filesToRenderList[ 0 ].filePath, this._filesToRenderList[ 0 ].fileUrl );
+      const fileToRender = this._filesToRenderList[ this._transitionIndex ];
 
-      if ( this._filesToRenderList.length > 1 ) {
-        this._startTransitionTimer();
-      }
+      this._renderImage( fileToRender.filePath, fileToRender.fileUrl );
+
+      this._startTransitionTimer();
     } else {
       this._clearDisplayedImage();
     }
@@ -383,13 +397,13 @@ class RiseImage extends RiseElement {
 
   _start() {
     if ( !this._isValidFiles( this.files )) {
-      return;
+      return this._startEmptyPlayUntilDoneTimer();
     }
 
     this._filesList = this._filterInvalidFileTypes( this.files.split( "|" ));
 
     if ( !this._filesList || !this._filesList.length || this._filesList.length === 0 ) {
-      return;
+      return this._startEmptyPlayUntilDoneTimer();
     }
 
     if ( RisePlayerConfiguration.isPreview()) {
@@ -405,6 +419,19 @@ class RiseImage extends RiseElement {
 
       this._watchInitiated = true;
     }
+  }
+
+  _stop() {
+    timeOut.cancel( this._transitionTimer );
+    this._clearDisplayedImage();
+
+    this._watchInitiated = false;
+    this._filesList = [];
+    this._managedFiles = [];
+    this._managedFilesInError = [];
+    this._filesToRenderList = [];
+    this._transitionTimer = null;
+    this._transitionIndex = 0;
   }
 
   _handleStartForPreview() {
@@ -505,9 +532,13 @@ class RiseImage extends RiseElement {
       return;
     }
 
-    if ( this._filesToRenderList.length < 2 && status.toUpperCase() === "CURRENT" ) {
+    if ( status.toUpperCase() === "CURRENT" ) {
       this._configureShowingImages();
     }
+  }
+
+  _sendDoneEvent( done ) {
+    super._sendEvent( "report-done", { done });
   }
 
   _sendImageEvent( eventName, detail = {}) {
