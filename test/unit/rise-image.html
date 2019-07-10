@@ -434,12 +434,12 @@
 
           test( "should get current status if metadata says that file exists", () => {
             element.metadata = [{
-           		"file": "risemedialibrary-7fa5ee92-7deb-450b-a8d5-e5ed648c575f/apache.png",
-           		"exists": true
-           	}, {
-           		"file": "risemedialibrary-abc123/README.md",
-           		"exists": true
-           	}];
+              "file": "risemedialibrary-7fa5ee92-7deb-450b-a8d5-e5ed648c575f/apache.png",
+              "exists": true
+            }, {
+              "file": "risemedialibrary-abc123/README.md",
+              "exists": true
+            }];
 
             const status = element._previewStatusFor( 'risemedialibrary-abc123/README.md' );
 
@@ -448,12 +448,12 @@
 
           test( "should get deleted status if metadata says that file doesn't exist", () => {
             element.metadata = [{
-           		"file": "risemedialibrary-7fa5ee92-7deb-450b-a8d5-e5ed648c575f/apache.png",
-           		"exists": true
-           	}, {
-           		"file": "risemedialibrary-abc123/README.md",
-           		"exists": false
-           	}];
+              "file": "risemedialibrary-7fa5ee92-7deb-450b-a8d5-e5ed648c575f/apache.png",
+              "exists": true
+            }, {
+              "file": "risemedialibrary-abc123/README.md",
+              "exists": false
+            }];
 
             const status = element._previewStatusFor( 'risemedialibrary-abc123/README.md' );
 
@@ -462,9 +462,9 @@
 
           test( "should get deleted status if metadata is not empty but does not contain the file", () => {
             element.metadata = [{
-           		"file": "risemedialibrary-7fa5ee92-7deb-450b-a8d5-e5ed648c575f/apache.png",
-           		"exists": true
-           	}];
+              "file": "risemedialibrary-7fa5ee92-7deb-450b-a8d5-e5ed648c575f/apache.png",
+              "exists": true
+            }];
 
             const status = element._previewStatusFor( 'risemedialibrary-abc123/README.md' );
 
