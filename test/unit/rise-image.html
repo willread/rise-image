@@ -339,26 +339,26 @@
         suite( "Play Unitl Done", () => {
 
           suite( "_isDone()", () => {
-    
+
             test("should return false when element is not configured for PUD", () => {
               assert.isFalse( element._isDone());
             });
 
             test("should return true when element is configured for PUD and transition index is last element", () => {
               element.setAttribute( "play-until-done", true);
-              
+
               element._transitionIndex = 0;
               element._filesToRenderList = [{"filePath":"risemedialibrary-7fa5ee92-7deb-450b-a8d5-e5ed648c575f/DSC01624.JPG"}];
-              
+
               assert.isTrue( element._isDone());
             });
 
             test("should return false when element is configured for PUD and transition index is not last element", () => {
               element.setAttribute( "play-until-done", true);
-              
+
               element._transitionIndex = 0;
               element._filesToRenderList = [{ filePath: "risemedialibrary-7fa5ee92-7deb-450b-a8d5-e5ed648c575f/DSC01624.JPG"}, { filePath: "risemedialibrary-30007b45-3df0-4c7b-9f7f-7d8ce6443013/logo.png"}];
-              
+
               assert.isFalse( element._isDone());
             });
 
@@ -374,10 +374,10 @@
             teardown( () => {
               sandbox.restore();
             });
-    
+
             test("should send report-done event when it is done", () => {
               element.setAttribute( "play-until-done", true);
-              
+
               element._transitionIndex = 0;
               element._filesToRenderList = [{ filePath: "risemedialibrary-7fa5ee92-7deb-450b-a8d5-e5ed648c575f/DSC01624.JPG"}];
 
@@ -398,10 +398,10 @@
             teardown( () => {
               sandbox.restore();
             });
-    
+
             test("should start empty play until done timer on empty files list", () => {
               element.setAttribute( "play-until-done", true);
-              
+
               element.files = "";
 
               element._start();
@@ -411,7 +411,7 @@
 
             test("should start empty play until done timer on invalid files list", () => {
               element.setAttribute( "play-until-done", true);
-              
+
               element.files = "risemedialibrary-abc123/README.md";
 
               element._start();
@@ -420,12 +420,60 @@
             });
 
           });
-          
+
+        });
+
+        suite( "_previewStatusFor", () => {
+          test( "should get current status if there is no metadata", () => {
+            element.metadata = [];
+
+            const status = element._previewStatusFor( 'risemedialibrary-abc123/README.md' );
+
+            assert.equal( status, "current" );
+          });
+
+          test( "should get current status if metadata says that file exists", () => {
+            element.metadata = [{
+              "file": "risemedialibrary-7fa5ee92-7deb-450b-a8d5-e5ed648c575f/apache.png",
+              "exists": true
+            }, {
+              "file": "risemedialibrary-abc123/README.md",
+              "exists": true
+            }];
+
+            const status = element._previewStatusFor( 'risemedialibrary-abc123/README.md' );
+
+            assert.equal( status, "current" );
+          });
+
+          test( "should get deleted status if metadata says that file doesn't exist", () => {
+            element.metadata = [{
+              "file": "risemedialibrary-7fa5ee92-7deb-450b-a8d5-e5ed648c575f/apache.png",
+              "exists": true
+            }, {
+              "file": "risemedialibrary-abc123/README.md",
+              "exists": false
+            }];
+
+            const status = element._previewStatusFor( 'risemedialibrary-abc123/README.md' );
+
+            assert.equal( status, "deleted" );
+          });
+
+          test( "should get deleted status if metadata is not empty but does not contain the file", () => {
+            element.metadata = [{
+              "file": "risemedialibrary-7fa5ee92-7deb-450b-a8d5-e5ed648c575f/apache.png",
+              "exists": true
+            }];
+
+            const status = element._previewStatusFor( 'risemedialibrary-abc123/README.md' );
+
+            assert.equal( status, "deleted" );
+          } );
+
         });
 
       });
-
-     
 
     </script>
   </body>
