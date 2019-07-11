@@ -248,12 +248,12 @@ class RiseImage extends RiseElement {
     return files.split( "|" );
   }
 
-  _isValidFiles() {
-    if ( !this.files ) {
+  _isValidFiles( files ) {
+    if ( !files || !Array.isArray( files )) {
       return false;
     }
 
-    return this.files.length > 0 && this.files.indexOf( "" ) === -1;
+    return files.length > 0 && files.indexOf( "" ) === -1;
   }
 
   _filterInvalidFileTypes( files ) {
@@ -414,7 +414,7 @@ class RiseImage extends RiseElement {
   }
 
   _start() {
-    if ( !this._isValidFiles()) {
+    if ( !this._isValidFiles( this.files )) {
       return this._startEmptyPlayUntilDoneTimer();
     }
 
