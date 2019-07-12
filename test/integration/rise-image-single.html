@@ -185,7 +185,7 @@
       test('it should render image', () => {
         element.dispatchEvent( new CustomEvent( "start" ) );
 
-        assert.equal(element.$.image.src, SAMPLE_URL);
+        assert.equal(element.$.image.src, `https://storage.googleapis.com/${ encodeURIComponent( SAMPLE_PATH )}`);
       });
 
     });

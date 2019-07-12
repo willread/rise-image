@@ -468,7 +468,7 @@ class RiseImage extends RiseElement {
   _handleStartForPreview() {
     this._filesList.forEach( file => this._handleImageStatusUpdated({
       filePath: file,
-      fileUrl: RiseImage.STORAGE_PREFIX + file,
+      fileUrl: RiseImage.STORAGE_PREFIX + encodeURIComponent( file ),
       status: this._previewStatusFor( file )
     }));
   }
